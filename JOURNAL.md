@@ -4,6 +4,31 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — First CI run red on stdlib CVEs and lint nits #incident #decision
+
+First push of the scaffold tripped govulncheck because CI pinned Go 1.22,
+which has unpatched CVEs in `crypto/tls`, `crypto/x509`, `net`, and
+`net/http` reachable from `http.Server.ListenAndServe` and
+`httputil.ReverseProxy.ServeHTTP`. Local Go 1.26.3 doesn't have those.
+Decision: keep `go.mod` at `go 1.22` as the floor for downstream users,
+but switch CI's `setup-go` to `go-version: stable` so the vulnerability
+scan reflects what a fresh install gets. golangci-lint also flagged four
+nits in `internal/transport/http/proxy_test.go` (two unused `r
+*http.Request` params, two unchecked `w.Write` returns) — fixed in the
+same commit `f5c0ff4`.
+
+## 2026-05-26 — First green build + baseline bench numbers #milestone
+
+`go test ./...` and `go test -race ./...` pass on first run after install
+(Go 1.26.3 from Homebrew). Build produces both `halberd` and `halberd-http`
+binaries cleanly. Initial bench on Apple M1: blocked DROP TABLE evaluates
+in **2.6 µs/op at 31 allocs/op**, an allowed SELECT in **4.0 µs/op at 25
+allocs/op**. Both an order of magnitude under the 200 µs / 50-alloc
+ceilings declared in CONTRIBUTING. The 25–31 allocs/op number is mostly
+`json.Unmarshal` of the JSON-RPC params (decoded twice — once in `peek` for
+the audit-log tool name, once in `evaluateToolCall`). Single-pass decode is
+the obvious future optimization but not load-bearing for v0.1.
+
 ## 2026-05-26 — Project kickoff #milestone #decision
 
 Started Halberd as the next cybersecurity project after ClearHash. Goal: a
