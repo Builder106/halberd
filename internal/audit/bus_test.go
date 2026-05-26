@@ -178,7 +178,7 @@ func TestBus_ConcurrentRecordersAreSafe(t *testing.T) {
 		t.Fatalf("stop: %v", err)
 	}
 
-	written := uint64(strings.Count(sink.String(), "\n"))
+	written := uint64(strings.Count(sink.String(), "\n")) //nolint:gosec // strings.Count is non-negative
 	dropped := bus.Dropped()
 	if written+dropped != sent.Load() {
 		t.Errorf("written=%d + dropped=%d != sent=%d (events vanished)",

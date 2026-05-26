@@ -59,7 +59,7 @@ jobs:
         run: go test -run=^$ -bench=. -benchmem -benchtime=2s ./internal/policy | tee bench.txt
 
       - name: upload benchmark output
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: bench
           path: bench.txt
