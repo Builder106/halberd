@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+// Event is one audit record: the decision the policy engine made about one
+// JSON-RPC payload at one direction (request or response).
 type Event struct {
 	Time       time.Time   `json:"time"`
 	Direction  string      `json:"direction"`
@@ -24,6 +26,9 @@ type Event struct {
 	RemoteAddr string      `json:"remote_addr,omitempty"`
 }
 
+// Bus is a non-blocking audit sink: callers push Events on the hot path,
+// a single goroutine drains them to JSONL. Events are dropped (not blocked
+// on) when the buffer fills, with a count exposed via Dropped().
 type Bus struct {
 	ch       chan Event
 	dropped  atomic.Uint64
@@ -32,6 +37,8 @@ type Bus struct {
 	stopOnce sync.Once
 }
 
+// NewBus returns a running Bus that writes JSONL to sink. buf is the channel
+// capacity; a zero or negative value defaults to 1024.
 func NewBus(sink io.Writer, buf int) *Bus {
 	if buf <= 0 {
 		buf = 1024
@@ -45,6 +52,8 @@ func NewBus(sink io.Writer, buf int) *Bus {
 	return b
 }
 
+// Record enqueues an event. Safe to call from any goroutine. Drops on
+// overflow rather than blocking the caller.
 func (b *Bus) Record(e Event) {
 	if e.Time.IsZero() {
 		e.Time = time.Now().UTC()
@@ -56,10 +65,14 @@ func (b *Bus) Record(e Event) {
 	}
 }
 
+// Dropped returns the cumulative count of events dropped because the channel
+// was full when Record was called.
 func (b *Bus) Dropped() uint64 {
 	return b.dropped.Load()
 }
 
+// Stop closes the bus and waits for the drain goroutine to flush remaining
+// events, bounded by ctx. Calling Stop more than once is a no-op.
 func (b *Bus) Stop(ctx context.Context) error {
 	b.stopOnce.Do(func() {
 		close(b.ch)

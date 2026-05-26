@@ -9,10 +9,10 @@ import (
 )
 
 type Bundle struct {
-	Version  int         `yaml:"version"`
-	Server   string      `yaml:"server"`
-	Tools    []ToolRule  `yaml:"tools"`
-	Defaults Defaults    `yaml:"defaults"`
+	Version  int        `yaml:"version"`
+	Server   string     `yaml:"server"`
+	Tools    []ToolRule `yaml:"tools"`
+	Defaults Defaults   `yaml:"defaults"`
 }
 
 type Defaults struct {
@@ -21,8 +21,8 @@ type Defaults struct {
 }
 
 type ToolRule struct {
-	Name      string                   `yaml:"name"`
-	Arguments map[string]ArgumentRule  `yaml:"arguments"`
+	Name      string                  `yaml:"name"`
+	Arguments map[string]ArgumentRule `yaml:"arguments"`
 }
 
 type ArgumentRule struct {

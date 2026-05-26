@@ -8,6 +8,9 @@ import (
 	"encoding/json"
 )
 
+// Request is a JSON-RPC 2.0 request envelope. ID is left as a RawMessage so
+// that whatever encoding (number or string) the client used round-trips back
+// verbatim in the corresponding Response.
 type Request struct {
 	JSONRPC string          `json:"jsonrpc"`
 	ID      json.RawMessage `json:"id,omitempty"`
@@ -15,6 +18,8 @@ type Request struct {
 	Params  json.RawMessage `json:"params,omitempty"`
 }
 
+// Response is a JSON-RPC 2.0 response envelope. Either Result or Error is
+// set, never both, per the spec.
 type Response struct {
 	JSONRPC string          `json:"jsonrpc"`
 	ID      json.RawMessage `json:"id"`
@@ -22,12 +27,15 @@ type Response struct {
 	Error   *Error          `json:"error,omitempty"`
 }
 
+// Error is the JSON-RPC 2.0 error object embedded in a Response.
 type Error struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
+// JSON-RPC 2.0 reserved error codes plus Halberd's policy-violation code.
+// CodePolicyViolation sits in the -32000..-32099 server-defined range.
 const (
 	CodeParseError     = -32700
 	CodeInvalidRequest = -32600
