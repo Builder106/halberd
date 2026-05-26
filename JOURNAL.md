@@ -4,6 +4,48 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — halberd-honeypot ships #milestone
+
+Added `cmd/halberd-honeypot`: a minimal stdio MCP server (~200 LOC) whose
+four tools each embody one of the v0.1 threat categories. Pairs with
+`halberd-stdio` and a matched `policies/halberd-honeypot.yaml` bundle for
+a one-command end-to-end demo:
+
+```
+halberd-stdio --policy policies/halberd-honeypot.yaml --audit out.jsonl
+              -- halberd-honeypot
+```
+
+Pipe in a `DROP TABLE`, a `../../etc/passwd`, or a `list_users` call and
+watch Halberd block / redact / audit before the agent sees the response.
+Smoke test in this session exercised all three behaviors in one pipe
+invocation: two requests blocked with synthetic `-32000` errors, one
+response with three redactions (AWS / GitHub / RSA), full audit trail.
+
+Three decisions worth recording:
+
+- **Not in `testdata/`, in `cmd/`.** `testdata/` is Go-specific magic
+  that gets excluded from `go build ./...`. The honeypot is a real
+  binary that's *intended* to be built and run — just never against
+  production data. Calling it `cmd/halberd-honeypot` plus a banner that
+  prints "VULNERABLE BY DESIGN" on startup communicates intent better
+  than burying it in a fixture directory.
+- **No build tag.** I considered `//go:build honeypot` to keep it out
+  of default builds. Rejected — the honeypot is a positive feature
+  (the test fixture that proves the whole stack works), not an
+  embarrassment to hide. Documented prominently, no gating.
+- **`tools/list_changed` deferred.** T4 (capability creep) needs a
+  stateful interaction sequence: server advertises N tools, agent calls
+  one, server then pushes a notification adding tool N+1. The honeypot
+  doesn't simulate this in v0.1 — its tool list is static. v0.2 adds a
+  trigger tool that emits the notification on demand so operators can
+  exercise mid-session inventory drift.
+
+11 honeypot-side tests cover the protocol (initialize, tools/list,
+notification suppression, unknown-method errors) and each tool's
+threat-shaped output. Combined with the existing transport and policy
+suites, Halberd's test surface now exceeds 60 cases.
+
 ## 2026-05-26 — P5 rule packs + hardening shipped (v0.1 feature-complete) #milestone
 
 Three new rule packs land alongside the existing postgres pack:

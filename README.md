@@ -77,6 +77,29 @@ go build -o bin/ ./cmd/...
 | [`mcp-server-filesystem.yaml`](policies/mcp-server-filesystem.yaml) | T2 (path traversal, absolute paths, home-dir expansion, null-byte injection), T5 (secrets in file contents) | Array-arg tools (`read_multiple_files`, `edit_file`) intentionally denied — v0.1 DSL is scalar-only |
 | [`mcp-server-git.yaml`](policies/mcp-server-git.yaml) | T2 (`--upload-pack=…`-style long-opt smuggling in ref/branch names; path traversal in `repo_path`), T5 | State-mutating tools (`commit`, `add`, `reset`, `init`) denied by default |
 | [`mcp-server-github.yaml`](policies/mcp-server-github.yaml) | T3 (owner-outside-allowlist; **edit `your-org` before deploying**), T2 (repo-name shell metacharacters), T5 | Truly dangerous tools (`delete_repository`, `transfer_repository`) omitted entirely |
+| [`halberd-honeypot.yaml`](policies/halberd-honeypot.yaml) | T1, T2, T3, T5 (the full v0.1 surface) | Matched bundle for [`cmd/halberd-honeypot`](cmd/halberd-honeypot/); demo-only |
+
+### Try the full v0.1 surface against the honeypot
+
+Halberd ships with a deliberately-vulnerable MCP server,
+[`cmd/halberd-honeypot`](cmd/halberd-honeypot/), whose tool outputs
+are the threats themselves. Pair it with `halberd-stdio` and the
+matched bundle for a one-command end-to-end demo:
+
+```bash
+go build -o bin/ ./cmd/...
+
+bin/halberd-stdio \
+  --policy policies/halberd-honeypot.yaml \
+  --audit  halberd.jsonl \
+  -- bin/halberd-honeypot
+```
+
+Pipe in a `tools/call` for `execute_sql` with `DROP TABLE`, or `read_file`
+with `../../etc/passwd`, or `list_users` (the response carries fake
+AWS / GitHub / RSA secrets) — and watch Halberd block, redact, and audit
+each one. See [`cmd/halberd-honeypot/README.md`](cmd/halberd-honeypot/README.md)
+for the full threat-coverage table.
 
 ### Option A — remote MCP server (HTTP transport)
 
@@ -169,6 +192,7 @@ Reproduce locally with `go test -bench=. -benchmem ./internal/policy`.
 - [`cmd/halberd-http`](cmd/halberd-http/main.go) — the reverse-proxy binary
 - [`cmd/halberd-stdio`](cmd/halberd-stdio/main.go) — the stdio MITM wrapper binary
 - [`cmd/halberd`](cmd/halberd/main.go) — operator CLI (`halberd lint …`)
+- [`cmd/halberd-honeypot`](cmd/halberd-honeypot/) — deliberately-vulnerable MCP server for demos and integration tests
 - [`internal/policy`](internal/policy/) — IO-free policy engine
 - [`internal/jsonrpc`](internal/jsonrpc/) — JSON-RPC 2.0 envelope + error synthesis
 - [`internal/audit`](internal/audit/) — non-blocking audit bus → JSONL

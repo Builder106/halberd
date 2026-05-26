@@ -31,6 +31,19 @@ go build -o bin/halberd-stdio ./cmd/halberd-stdio
                     -- mcp-server-postgres --conn-string "$PG_CONN"
 ```
 
+To run the full v0.1 surface against the deliberately-vulnerable
+honeypot (the demo target — never point at production data):
+
+```bash
+go build -o bin/ ./cmd/...
+./bin/halberd-stdio --policy policies/halberd-honeypot.yaml \
+                    --audit  halberd.jsonl \
+                    -- ./bin/halberd-honeypot
+```
+
+See [`cmd/halberd-honeypot/README.md`](cmd/halberd-honeypot/README.md)
+for the threat-coverage table.
+
 ## Project-specific guardrails
 
 - **Latency is a feature.** The policy engine sits on every JSON-RPC request.

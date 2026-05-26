@@ -1,0 +1,60 @@
+# Halberd rule pack matched to cmd/halberd-honeypot — the deliberately-
+# vulnerable demo server. Pair them via halberd-stdio and you have a
+# one-command end-to-end playground:
+#
+#   halberd-stdio --policy policies/halberd-honeypot.yaml \
+#                 --audit  halberd.jsonl \
+#                 -- halberd-honeypot
+#
+# Then send the honeypot a malicious tools/call and watch Halberd block
+# it (or redact the response) before the agent sees anything.
+
+version: 1
+server: halberd-honeypot
+
+_anchors:
+  path_arg: &path_arg
+    type: string
+    max_length: 4096
+    deny_patterns:
+      - '^/'
+      - '(^|/)\.\.(/|$)'
+      - '^~'
+      - '\x00'
+
+tools:
+  - name: get_weather
+    arguments:
+      city:
+        type: string
+        max_length: 64
+
+  - name: execute_sql
+    arguments:
+      query:
+        type: string
+        max_length: 4096
+        deny_patterns:
+          - '(?i)\bdrop\s+(table|database|schema)\b'
+          - '(?i)\btruncate\s+table\b'
+          - ';\s*--'
+
+  - name: read_file
+    arguments:
+      path: *path_arg
+
+  - name: list_users
+    arguments: {}
+
+defaults:
+  unknown_tool: deny
+  unknown_method: log_and_pass
+
+response_filters:
+  global:
+    strip_ansi_escapes: true
+    strip_zero_width: true
+    secret_scanners:
+      - aws_access_key
+      - github_token
+      - rsa_private_key
