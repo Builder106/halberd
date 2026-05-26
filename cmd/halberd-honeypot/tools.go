@@ -137,16 +137,27 @@ func readFile(args json.RawMessage) map[string]any {
 	return textResult(out)
 }
 
-// listUsers (T5) returns a response containing fake but realistic-looking
+// listUsers (T5) returns a response containing fake but realistic-shaped
 // secrets so Halberd's response-side scanners have something to redact.
-// All values are documented public examples (AWS IAM docs, GitHub token
-// format docs) — nothing live.
+// All values are documented public examples or obviously-fake fixtures:
+//
+//   - AKIAIOSFODNN7EXAMPLE is from AWS's IAM documentation; secret scanners
+//     keep it on a known-fakes allowlist.
+//   - ghp_AAAA…(×36) is structurally a GitHub PAT but 36 identical chars;
+//     the GitHub API rejects it as "bad credentials" and scanner heuristics
+//     filter low-entropy strings.
+//   - The RSA block uses a literal "...[FIXTURE_NOT_A_REAL_KEY]" body
+//     instead of realistic base64. Source-level scanners (GitGuardian,
+//     truffleHog) fire on any -----BEGIN PRIVATE KEY----- block; the
+//     ellipsis + plain-English marker is the lowest-friction way to signal
+//     "this is a fixture, not a credential" without breaking Halberd's
+//     own runtime regex (which matches the BEGIN/END pair body-agnostic).
 func listUsers() map[string]any {
 	text := "rows:\n" +
 		"  alice  aws_key=AKIAIOSFODNN7EXAMPLE\n" +
 		"  bob    gh_token=ghp_" + repeatA(36) + "\n" +
 		"  carol  ssh_key=-----BEGIN RSA PRIVATE KEY-----\n" +
-		"           MIIBOgIBAAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf9Cnzj4p4WGeKLs1Pt8Q\n" +
+		"           MIIBOgIBAAJBAK...[FIXTURE_NOT_A_REAL_KEY]\n" +
 		"           -----END RSA PRIVATE KEY-----"
 	return textResult(text)
 }
