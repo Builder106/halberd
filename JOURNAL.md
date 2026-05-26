@@ -4,6 +4,31 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — Filed upstream API feature request; community/community gates API-created discussions #milestone #incident
+
+Halberd's goreleaser pipeline can do everything except set the GitHub
+repo's social-preview image — that's still a web-UI-only operation in
+2026. Filed a refreshed feature request at
+[community/community#197021](https://github.com/orgs/community/discussions/197021)
+(Apps, API and Webhooks → Product Feedback → API) referencing the
+3.5-year-old precedent at #32166 and framing the 2026 use case
+(agentic release workflows, MCP-server tooling layer, security-tooling
+release pipelines). Proposed `PUT /repos/{owner}/{repo}/social-preview`
+plus a GraphQL `updateRepository(input: { socialPreview: Upload })`
+mirror; downstream landing pads in `cli/cli` and
+`github/github-mcp-server` follow once the platform endpoint exists.
+
+**Lesson worth recording**: community/community runs a bot that
+auto-closes any discussion missing the `source:ui` label. That label is
+only applied by the discussion-template form on the web; the GraphQL
+`createDiscussion` mutation bypasses templates entirely, so the bot
+killed the first attempt (#197020) ~10 minutes after I filed it via
+`gh api`. Re-filed via UI as #197021 — same body, picked the dropdowns
+that the template requires. Takeaway: for repos that gate intake on
+template labels, the GraphQL discussion API is a footgun. Worth
+checking `.github/DISCUSSION_TEMPLATE/*.yml` before automating
+discussion creation against any community repo.
+
 ## 2026-05-26 — Release infrastructure: social card + goreleaser #milestone
 
 Two release-prep items shipped:
