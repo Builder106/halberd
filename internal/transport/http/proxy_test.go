@@ -54,7 +54,7 @@ func TestProxy_ForwardsAllowedRequest(t *testing.T) {
 		if !strings.Contains(string(body), "SELECT") {
 			t.Errorf("upstream did not see SELECT, got %s", body)
 		}
-		w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{}}`))
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{}}`))
 	})
 
 	h, _, cleanup := newTestProxy(t, upstream)
@@ -75,7 +75,7 @@ func TestProxy_ForwardsAllowedRequest(t *testing.T) {
 
 func TestProxy_BlocksDropTable(t *testing.T) {
 	upstreamHit := false
-	upstream := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	upstream := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		upstreamHit = true
 		w.WriteHeader(http.StatusOK)
 	})
@@ -109,9 +109,9 @@ func TestProxy_BlocksDropTable(t *testing.T) {
 
 func TestProxy_NonPostPassesThrough(t *testing.T) {
 	upstreamHit := false
-	upstream := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	upstream := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		upstreamHit = true
-		w.Write([]byte("ok"))
+		_, _ = w.Write([]byte("ok"))
 	})
 
 	h, _, cleanup := newTestProxy(t, upstream)
