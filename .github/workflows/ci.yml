@@ -16,7 +16,11 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          # Pinned to 1.25 because golangci-lint 2.12.2 (current) was built
+          # with 1.25 and cannot parse 1.26's stdlib export data. The Go team
+          # backports security fixes to N-1, so 1.25 still receives CVE
+          # patches. Bump when golangci-lint adds 1.26 support (issue #6272).
+          go-version: '1.25'
           cache: true
 
       - name: go mod tidy (verify)
@@ -44,7 +48,11 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          # Pinned to 1.25 because golangci-lint 2.12.2 (current) was built
+          # with 1.25 and cannot parse 1.26's stdlib export data. The Go team
+          # backports security fixes to N-1, so 1.25 still receives CVE
+          # patches. Bump when golangci-lint adds 1.26 support (issue #6272).
+          go-version: '1.25'
           cache: true
 
       - name: run benchmarks
@@ -63,7 +71,11 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          # Pinned to 1.25 because golangci-lint 2.12.2 (current) was built
+          # with 1.25 and cannot parse 1.26's stdlib export data. The Go team
+          # backports security fixes to N-1, so 1.25 still receives CVE
+          # patches. Bump when golangci-lint adds 1.26 support (issue #6272).
+          go-version: '1.25'
           cache: true
 
       - name: install govulncheck
@@ -79,9 +91,13 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: 'stable'
+          # Pinned to 1.25 because golangci-lint 2.12.2 (current) was built
+          # with 1.25 and cannot parse 1.26's stdlib export data. The Go team
+          # backports security fixes to N-1, so 1.25 still receives CVE
+          # patches. Bump when golangci-lint adds 1.26 support (issue #6272).
+          go-version: '1.25'
           cache: true
 
       - uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.59
+          version: v2.12.2
