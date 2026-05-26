@@ -1,0 +1,129 @@
+# goreleaser config for Halberd.
+#
+# To cut a release:
+#   1. Update JOURNAL.md with the release entry.
+#   2. git tag -a v0.1.0 -m "v0.1.0"
+#   3. git push origin v0.1.0
+# The release.yml workflow runs goreleaser against the tag and uploads
+# checksums + tar.gz archives for linux/darwin × amd64/arm64.
+#
+# To dry-run locally (no publish):
+#   goreleaser release --snapshot --clean
+# Snapshot artifacts land in ./dist/ and are excluded by .gitignore.
+
+version: 2
+
+project_name: halberd
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: halberd
+    main: ./cmd/halberd
+    binary: halberd
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+  - id: halberd-http
+    main: ./cmd/halberd-http
+    binary: halberd-http
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+
+  - id: halberd-stdio
+    main: ./cmd/halberd-stdio
+    binary: halberd-stdio
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+
+  - id: halberd-honeypot
+    main: ./cmd/halberd-honeypot
+    binary: halberd-honeypot
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+
+archives:
+  - id: halberd
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    formats: [tar.gz]
+    # Bundle the rule packs and example bundle so a downloaded archive is
+    # immediately useful — operators can run halberd-http or halberd-stdio
+    # against a policy without first cloning the repo.
+    files:
+      - LICENSE
+      - README.md
+      - CONTRIBUTING.md
+      - halberd.example.yaml
+      - policies/*.yaml
+      - docs/threat-model.md
+      - docs/policy-dsl.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  # Snapshot builds (no tag) get a version like "0.1.1-next-SHA" so they
+  # never collide with a published tag.
+  version_template: '{{ incpatch .Version }}-next'
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+      - '^lint:'
+      - '(?i)readme'
+      - '(?i)journal'
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: Fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Other
+      order: 999
+
+release:
+  github:
+    owner: Builder106
+    name: Halberd
+  draft: false
+  # Tag like v0.1.0-rc1 → prerelease. Tag like v0.1.0 → full release.
+  prerelease: auto
+  header: |
+    Halberd {{ .Tag }} — a JSON-RPC firewall for MCP agents.
+
+    See [README.md](https://github.com/Builder106/Halberd/blob/{{ .Tag }}/README.md)
+    for the full feature surface, and
+    [docs/threat-model.md](https://github.com/Builder106/Halberd/blob/{{ .Tag }}/docs/threat-model.md)
+    for the threats v0.1 covers.
+
+  footer: |
+    **Verifying the download:**
+    ```bash
+    sha256sum -c checksums.txt
+    ```

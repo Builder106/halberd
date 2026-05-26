@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0e14"/>
+      <stop offset="100%" stop-color="#10161e"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#dde6f0"/>
+      <stop offset="50%" stop-color="#9aabbe"/>
+      <stop offset="100%" stop-color="#5e6e80"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"  stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c4dff"/>
+      <stop offset="100%" stop-color="#00d4ff"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1c2530" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.55">
+      <stop offset="0%"  stop-color="#7c4dff" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#0a0e14" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.6"/>
+  <ellipse cx="280" cy="315" rx="320" ry="320" fill="url(#glow)"/>
+
+  <!-- Halberd mark, centered vertically (y=315), scaled up vs the README banner -->
+  <g transform="translate(260 315)">
+    <!-- Pole (500px tall) -->
+    <rect x="-7" y="-250" width="14" height="500" fill="#3a4a5e" rx="2"/>
+    <rect x="-7" y="-250" width="7"  height="500" fill="#202b3a" rx="2"/>
+
+    <!-- Spike -->
+    <polygon points="0,-300 -12,-250 12,-250" fill="url(#steel)" stroke="#0a0e14" stroke-width="1.5"/>
+
+    <!-- Axe blade (left) -->
+    <path d="M -12 -220
+             Q -100 -190 -130 -110
+             Q -115 -85 -80 -78
+             L -12 -85
+             Z"
+          fill="url(#steel)" stroke="#0a0e14" stroke-width="1.8"/>
+    <path d="M -130 -110 Q -115 -85 -80 -78" fill="none" stroke="url(#edge)" stroke-width="2.5"/>
+
+    <!-- Beak / hook (right) -->
+    <path d="M 12 -220
+             Q 70 -190 90 -140
+             Q 75 -115 50 -115
+             L 12 -135
+             Z"
+          fill="url(#steel)" stroke="#0a0e14" stroke-width="1.8"/>
+
+    <!-- Cross-guard band -->
+    <rect x="-30" y="-78" width="60" height="18" rx="3" fill="#5e6e80" stroke="#0a0e14" stroke-width="1.2"/>
+    <rect x="-30" y="-78" width="60" height="4"  fill="#dde6f0" opacity="0.7"/>
+
+    <!-- Pommel -->
+    <circle cx="0" cy="245" r="14" fill="#5e6e80" stroke="#0a0e14" stroke-width="1.2"/>
+  </g>
+
+  <!-- Wordmark block, right-side -->
+  <g transform="translate(490 315)">
+    <text x="0" y="-50"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"
+          font-size="148"
+          font-weight="800"
+          letter-spacing="-3"
+          fill="#f0f4f8">HALBERD</text>
+
+    <rect x="3" y="-18" width="180" height="4" fill="url(#accent)"/>
+
+    <text x="0" y="35"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif"
+          font-size="34"
+          font-weight="500"
+          fill="#9aabbe">A JSON-RPC firewall for MCP agents.</text>
+
+    <text x="0" y="100"
+          font-family="ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace"
+          font-size="24"
+          fill="#5e6e80">tools/call → policy → audit → upstream</text>
+  </g>
+
+  <!-- Footer attribution: project URL anchor without timestamping the card -->
+  <text x="600" y="595"
+        text-anchor="middle"
+        font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+        font-size="18"
+        fill="#3a4a5e">github.com/Builder106/Halberd</text>
+</svg>

@@ -35,7 +35,9 @@ import (
 	"syscall"
 )
 
-const version = "0.1.0"
+// version is set at link time by goreleaser via `-X main.version=<tag>`.
+// Local builds report "dev".
+var version = "dev"
 
 func main() {
 	log.SetOutput(os.Stderr)

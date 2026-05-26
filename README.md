@@ -58,11 +58,25 @@ sequenceDiagram
     end
 ```
 
-## Quick start
+## Install
+
+**Pre-built binaries** for linux/darwin × amd64/arm64 ship with every
+release. Grab the archive matching your platform from the [latest
+release](https://github.com/Builder106/Halberd/releases/latest); each
+tarball bundles all four binaries plus `LICENSE`, `README.md`,
+`CONTRIBUTING.md`, the example bundle, and every rule pack.
+
+```bash
+curl -L https://github.com/Builder106/Halberd/releases/latest/download/halberd_${VERSION}_${OS}_${ARCH}.tar.gz \
+  | tar -xz
+./halberd version
+```
+
+**Build from source:**
 
 ```bash
 brew install go
-git clone https://github.com/Builder106/halberd && cd halberd
+git clone https://github.com/Builder106/Halberd && cd Halberd
 go build -o bin/ ./cmd/...
 
 # Validate a policy bundle:
@@ -214,6 +228,12 @@ Reproduce locally with `go test -bench=. -benchmem ./internal/policy`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The "out of scope" list near the
 bottom is worth reading before opening a PR.
+
+## Branding assets
+
+- [`assets/banner-{dark,light}.svg`](assets/) — README banner (1200×420), light/dark variants swapped via `<picture>`.
+- [`assets/social-preview.svg`](assets/social-preview.svg) + [`.png`](assets/social-preview.png) — 1200×630 social-preview card. Upload the PNG via **Settings → Social preview → Upload an image** to populate GitHub's link-share card.
+- [`assets/favicon.svg`](assets/favicon.svg) + [`assets/apple-touch-icon.png`](assets/apple-touch-icon.png) — favicon (designed for 32×32 legibility) and iOS home-screen icon (180×180 on solid background).
 
 ## License
 

@@ -81,6 +81,35 @@ for the threat-coverage table.
 - **Distributed clustering / replication.** Halberd is a single-process
   proxy. Run one per upstream MCP server.
 
+## Cutting a release
+
+Releases are tag-driven. Pushing a `v*` tag triggers
+[`.github/workflows/release.yml`](.github/workflows/release.yml), which
+runs goreleaser against the tag and publishes a GitHub Release with
+multi-arch archives.
+
+```bash
+# 1. Make sure main is green and the JOURNAL has a release entry.
+gh run list --limit 1
+$EDITOR JOURNAL.md
+
+# 2. Dry-run goreleaser locally — catches config or build errors before
+#    they fail in CI.
+goreleaser release --snapshot --clean --skip=announce,publish
+
+# 3. Tag and push. The release workflow takes over from here.
+git tag -a v0.1.0 -m "v0.1.0"
+git push origin v0.1.0
+
+# 4. Watch the run; the release lands at
+#    https://github.com/Builder106/Halberd/releases/tag/v0.1.0
+gh run watch
+```
+
+Goreleaser injects the tag value as `main.version` at link time, so
+`halberd version` and the `halberd-honeypot` startup banner both report
+the actual release version. Snapshot builds report `<next>-next-<sha>`.
+
 ## Reporting security issues
 
 Do **not** open a public GitHub issue for a vulnerability in Halberd itself.

@@ -4,6 +4,42 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — Release infrastructure: social card + goreleaser #milestone
+
+Two release-prep items shipped:
+
+- **Social-preview card** at `assets/social-preview.{svg,png}`, 1200×630.
+  Adapts the existing banner's color palette (dark slate, purple→cyan
+  accent stripe, halberd silhouette) to the wider 1.9:1 ratio used by
+  link-share cards. GitHub's REST API doesn't expose social-preview as
+  a settable field — needs manual upload via Settings → Social preview.
+  Documented in the README's branding-assets section.
+- **goreleaser** config at `.goreleaser.yaml` + release workflow at
+  `.github/workflows/release.yml`. Tag-driven (`v*`); builds 4 binaries
+  × 4 OS/arch targets (linux/darwin × amd64/arm64), bundles each archive
+  with LICENSE/README/CONTRIBUTING + every rule pack + the example
+  bundle + threat-model and policy-DSL docs, generates a SHA-256
+  checksum manifest, and publishes a GitHub Release. Skipped Windows
+  for v0.1 — halberd-stdio's PTY-free stdio handoff isn't tested there
+  and the audience is Unix-first.
+
+Two decisions worth recording:
+
+- **`const version` → `var version`.** Goreleaser injects the tag value
+  via `-ldflags "-X main.version=…"`, which only works on package vars.
+  cmd/halberd and cmd/halberd-honeypot both updated. Snapshot dry-run
+  confirms the binary now reports the resolved tag (or `<next>-next-<sha>`
+  for snapshot builds).
+- **No Docker image yet.** Goreleaser can build images, but Halberd is
+  a process-mode proxy that mostly runs alongside its host (Claude
+  Desktop, Cursor, etc.), not in a container. Docker shippable later
+  when there's a real ops story for the remote / k8s deployment.
+
+Validated locally with `goreleaser release --snapshot --clean
+--skip=announce,publish`: 16 cross-compiles + 4 archives + checksums
+in 57s, every binary present in every archive, version injection
+working. Ready for the first real tag push.
+
 ## 2026-05-26 — halberd-honeypot ships #milestone
 
 Added `cmd/halberd-honeypot`: a minimal stdio MCP server (~200 LOC) whose
