@@ -15,6 +15,11 @@ tools: [<tool>...]
 defaults:
   unknown_tool:   allow | deny | log_and_pass
   unknown_method: allow | deny | log_and_pass
+response_filters:               # optional; absent = no response inspection
+  global:
+    strip_ansi_escapes: <bool>
+    strip_zero_width:   <bool>
+    secret_scanners:    [<scanner-name>...]
 ```
 
 | Key | Required | Notes |
@@ -62,6 +67,41 @@ and line number.
 code points. The default upper bound for any string argument should be
 8192 — long-tail tools rarely need more, and capping protects against
 denial-of-service via oversized payloads.
+
+## Response inspection
+
+`response_filters.global` configures sanitization applied to JSON-RPC
+responses flowing from the upstream MCP server back to the agent. The
+inspector parses the response envelope, walks the `result` subtree, and
+sanitizes every string leaf. The envelope's `jsonrpc`, `id`, and `error`
+fields round-trip verbatim — Halberd does not touch protocol metadata.
+
+| Field | Effect |
+|---|---|
+| `strip_ansi_escapes` | Removes CSI (`\x1b[...]`) and OSC (`\x1b]...\x07`) escape sequences. Tool output has no legitimate reason to contain terminal-control codes; their presence is a strong tool-poisoning signal. |
+| `strip_zero_width` | Removes U+200B/U+200C/U+200D/U+2060/U+FEFF. These are invisible but can carry steganographic payloads or split injection markers across log scrapers. |
+| `secret_scanners` | List of built-in detectors that replace matches with `[REDACTED]`. |
+
+Built-in scanner names:
+
+- `aws_access_key` — `AKIA…` (standard) and `ASIA…` (STS) keys
+- `github_token` — `ghp_…` / `ghs_…` / `gho_…` / `ghr_…` / `ghu_…`, 36+ chars
+- `rsa_private_key` — `-----BEGIN [RSA|OPENSSH|EC|DSA] PRIVATE KEY-----` blocks, redacted from BEGIN to END
+
+A bundle with no `response_filters` block does no response-side work
+whatsoever — every response forwards verbatim. The check happens once at
+proxy startup, not per-request.
+
+### What response inspection does *not* cover in v0.1
+
+- **SSE streams.** When the upstream sends `Content-Type:
+  text/event-stream`, Halberd forwards events unchanged. Per-event
+  inspection is on the v0.2 roadmap.
+- **The `error` field.** Server-defined error messages are not
+  sanitized — operators inspect them directly in audit logs.
+- **Per-tool response policy.** Only `response_filters.global` exists in
+  v0.1. Per-tool constraints (`max_rows`, response-shape validation) land
+  in v0.2.
 
 ## What Halberd does *not* validate
 

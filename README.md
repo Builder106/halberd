@@ -32,8 +32,8 @@ Halberd defends that boundary against five concrete threats:
 | T4 | Capability creep | A server pushes `tools/list_changed` mid-session; a new, unvetted tool appears and gets called |
 | T5 | Exfiltration via response | A tool response carries SSH keys, env vars, or other secrets back into the model context |
 
-v0.1 ships full request-side coverage of **T2** and **T4** over both
-**HTTP** and **stdio** transports. T1, T3, and T5 are the v0.2 roadmap.
+v0.1 covers **T1**, **T2**, **T4**, and **T5** over both **HTTP** and
+**stdio** transports. T3 (out-of-scope I/O) is the v0.2 roadmap.
 
 ## How it works
 
@@ -139,7 +139,7 @@ Full reference: [docs/policy-dsl.md](docs/policy-dsl.md).
 | **P1** — HTTP reverse proxy + audit bus | shipped in v0.1 | `halberd-http` forwards JSON-RPC, logs every decision |
 | **P2** — Policy engine, deny-pattern blocking, T2 + T4 coverage | shipped in v0.1 | YAML bundles, regex denylist, capability-creep guard |
 | **P3** — stdio transport | shipped in v0.1 | `halberd-stdio` MITMs local MCP servers (Claude Desktop, Cursor, Windsurf) over line-delimited JSON-RPC |
-| **P4** — Response inspection | planned | SSE-aware streaming inspection, T1 + T5 coverage |
+| **P4** — Response inspection | shipped in v0.1 | JSON-tree walk on every response: strip ANSI / zero-width Unicode, redact AWS / GitHub / RSA secrets. T1 + T5 coverage. (SSE per-event inspection on v0.2 roadmap.) |
 | **P5** — Rule packs + hardening | planned | Pre-built bundles for filesystem / git / postgres / github |
 
 ## Performance

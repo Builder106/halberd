@@ -4,6 +4,46 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — P4 response inspection shipped #milestone #decision
+
+Halberd now sanitizes JSON-RPC responses in both transports: T1 (tool
+poisoning via ANSI / zero-width Unicode) and T5 (secret exfiltration via
+AWS / GitHub / RSA keys) are covered on the response side. Sanitize-in-
+place strategy, not block-with-error — the agent already invoked the
+tool, suppressing the response leaves it confused; redacting bad bits
+preserves the call's usefulness. Three load-bearing decisions:
+
+- **JSON-tree walk, not raw-byte regex.** ANSI escapes get encoded as
+  `` on the wire, not raw ESC. Zero-width chars may be raw UTF-8
+  *or* `​`. Scanning raw bytes would miss the JSON-encoded forms.
+  The walker unmarshals the envelope, recursively descends `result`,
+  sanitizes each string leaf, and re-marshals. `id`, `jsonrpc`, and
+  `error` are kept as `json.RawMessage` so protocol metadata round-trips
+  byte-exact.
+- **SSE skipped in v0.1.** Buffering a `text/event-stream` body to scan
+  it would break the streaming contract; per-event inspection lands in
+  P4.5 / v0.2. The HTTP `ModifyResponse` short-circuits on
+  `Content-Type: text/event-stream`.
+- **Opt-in per bundle.** `response_filters: nil` is the fast path —
+  transports skip the response-buffering entirely via
+  `engine.HasResponseFilters()`. Bundles that only do request-side
+  enforcement pay zero response overhead.
+
+Detection records carry `{kind, path}` only — never the matched secret
+itself. Logging the very thing we were redacting would defeat the point.
+
+## 2026-05-26 — JSON fixture gotcha: raw ESC bytes are invalid JSON #incident
+
+First run of the response-inspection tests failed with "expected
+modification, got none." Root cause: I had embedded raw `\x1b` bytes in
+test JSON fixtures using backtick raw strings. RFC 8259 requires control
+characters (U+0000–U+001F) to be escaped in JSON strings; Go's
+`json.Unmarshal` rejects unescaped ESC, so `EvaluateResponse` fell
+through to its "non-JSON, pass through" branch. Fixed by writing ``
+in the JSON — which is also what real MCP servers send on the wire.
+Lesson: when authoring JSON-RPC test fixtures, paste the on-the-wire
+representation, not the post-decode form.
+
 ## 2026-05-26 — P3 stdio transport shipped #milestone #decision
 
 Halberd now wraps stdio MCP servers (Claude Desktop, Cursor, Windsurf).

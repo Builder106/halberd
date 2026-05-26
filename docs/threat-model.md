@@ -4,7 +4,7 @@ Halberd defends the boundary between an LLM agent and the MCP servers it
 calls. Five threats are in scope; the v0.1 release covers two of them
 end-to-end and lays the groundwork for the rest.
 
-## T1 — Tool poisoning *(planned, P4)*
+## T1 — Tool poisoning *(covered, v0.1)*
 
 **Vector.** A compromised or adversarial MCP server returns content in a
 `tools/call` result that hijacks the agent's next turn. Common payloads:
@@ -50,7 +50,7 @@ bundle is rejected with category `T4_capability_creep` (v0.1 covers this
 on the request side; the v0.2 roadmap adds a `tools/list_changed`
 notification-side guard).
 
-## T5 — Exfiltration via response *(planned, P4)*
+## T5 — Exfiltration via response *(covered, v0.1)*
 
 **Vector.** A compromised tool's response contains secrets bound for the
 model context: AWS access keys, GitHub tokens, RSA private key blocks,
@@ -59,8 +59,9 @@ attacker-controlled webhook, or pastes them into the next tool call.
 
 **Halberd's job.** Scan response bodies with built-in detectors for the
 common secret formats and rewrite them to `[REDACTED]` before they reach
-the agent. Detectors land in `internal/policy/secret_scanner.go` (stub
-present in v0.1; active in P4).
+the agent. Detectors live in `internal/policy/sanitize.go`; v0.1 ships
+`aws_access_key`, `github_token`, and `rsa_private_key`. Operators
+opt in per-bundle via `response_filters.global.secret_scanners`.
 
 ## Out-of-threat-model
 

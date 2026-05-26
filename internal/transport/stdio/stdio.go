@@ -129,13 +129,32 @@ func Wrap(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host HostS
 		}
 	}()
 
-	// child stdout -> host stdout (P4 will add response policy here)
+	// child stdout -> response inspection -> host stdout
 	go func() {
 		defer wg.Done()
 		sc := bufio.NewScanner(child.Stdout)
 		sc.Buffer(make([]byte, 64<<10), MaxLineBytes)
+		inspectResponses := engine.HasResponseFilters()
 		for sc.Scan() {
-			if err := writeHostLine(sc.Bytes()); err != nil {
+			line := sc.Bytes()
+			payload := line
+
+			if inspectResponses {
+				// EvaluateResponse needs its own copy because bufio.Scanner
+				// reuses the underlying buffer on the next Scan call.
+				owned := make([]byte, len(line))
+				copy(owned, line)
+				result := engine.EvaluateResponse(owned)
+				payload = result.Payload
+				if len(result.Detections) > 0 {
+					bus.Record(audit.Event{
+						Direction:  "response",
+						Violations: result.Detections,
+					})
+				}
+			}
+
+			if err := writeHostLine(payload); err != nil {
 				slog.Error("write to host stdout", "err", err)
 				return
 			}

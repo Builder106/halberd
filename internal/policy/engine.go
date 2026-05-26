@@ -22,6 +22,14 @@ func New(b *Bundle) *Engine {
 // Server returns the bundle's `server:` identifier, for use in audit logs.
 func (e *Engine) Server() string { return e.bundle.Server }
 
+// HasResponseFilters reports whether the bundle configures any response
+// inspection. Transports use this to avoid buffering response bodies when
+// no inspection would occur — a hot-path optimization for bundles that
+// only do request-side enforcement.
+func (e *Engine) HasResponseFilters() bool {
+	return e.bundle.ResponseFilters != nil
+}
+
 // EvaluateRequest decides whether the JSON-RPC payload should be forwarded
 // to the upstream MCP server. Returns a Decision with Blocked=false and no
 // Violations on the happy path; the hot-path allocator profile in

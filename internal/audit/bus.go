@@ -82,7 +82,12 @@ func (b *Bus) Dropped() uint64 {
 
 // Stop signals the drain goroutine to flush remaining buffered events and
 // exit. Returns when the drain has exited or ctx is cancelled. Idempotent.
+// A nil ctx is treated as context.Background() so callers can spell "wait
+// forever" with bus.Stop(nil).
 func (b *Bus) Stop(ctx context.Context) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	b.stopOnce.Do(func() {
 		close(b.done)
 	})

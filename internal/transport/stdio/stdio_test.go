@@ -248,6 +248,86 @@ func TestWrap_DropsBlockedNotificationSilently(t *testing.T) {
 	}
 }
 
+const bundleWithResponseFilters = `
+version: 1
+server: test
+tools:
+  - name: query
+    arguments: {}
+defaults: { unknown_tool: deny, unknown_method: log_and_pass }
+response_filters:
+  global:
+    secret_scanners: [aws_access_key]
+`
+
+func newRigWithBundle(t *testing.T, src string) *rig {
+	t.Helper()
+	bundle, err := policy.ParseBundle([]byte(src))
+	if err != nil {
+		t.Fatalf("parse bundle: %v", err)
+	}
+	engine := policy.New(bundle)
+
+	hostInR, hostInW := io.Pipe()
+	hostOutR, hostOutW := io.Pipe()
+	childInR, childInW := io.Pipe()
+	childOutR, childOutW := io.Pipe()
+	childErrR, childErrW := io.Pipe()
+
+	auditBuf := &bytes.Buffer{}
+	bus := audit.NewBus(auditBuf, 16)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() {
+		done <- Wrap(ctx, engine, bus, HostStreams{
+			In: hostInR, Out: hostOutW, Err: io.Discard,
+		}, ChildStreams{
+			Stdin: childInW, Stdout: childOutR, Stderr: childErrR,
+		})
+		_ = hostOutW.Close()
+	}()
+
+	return &rig{
+		hostIn:      hostInW,
+		hostOut:     bufio.NewReader(hostOutR),
+		hostOutPipe: hostOutR,
+		childStdin:  bufio.NewReader(childInR),
+		childStdout: childOutW,
+		childStderr: childErrW,
+		auditBuf:    auditBuf,
+		bus:         bus,
+		wrapDone:    done,
+		cancel:      cancel,
+	}
+}
+
+func TestWrap_SanitizesResponse(t *testing.T) {
+	r := newRigWithBundle(t, bundleWithResponseFilters)
+	defer r.close(t)
+
+	// Feed an allowed request so the wrapper is in steady state.
+	req := `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query","arguments":{}}}`
+	if _, err := r.hostIn.Write([]byte(req + "\n")); err != nil {
+		t.Fatalf("write host stdin: %v", err)
+	}
+	_ = readChildLine(t, r)
+
+	// Fake child response carrying an AWS key.
+	resp := `{"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"db user AKIAIOSFODNN7EXAMPLE"}]}}`
+	if _, err := r.childStdout.Write([]byte(resp + "\n")); err != nil {
+		t.Fatalf("write child stdout: %v", err)
+	}
+
+	line := readHostLine(t, r)
+	if strings.Contains(line, "AKIAIOSFODNN7EXAMPLE") {
+		t.Errorf("AWS key leaked through stdio response inspector: %q", line)
+	}
+	if !strings.Contains(line, "[REDACTED]") {
+		t.Errorf("redaction placeholder missing: %q", line)
+	}
+}
+
 func TestWrap_ChildStderrPassesThrough(t *testing.T) {
 	bundle, _ := policy.ParseBundle([]byte(testBundle))
 	engine := policy.New(bundle)

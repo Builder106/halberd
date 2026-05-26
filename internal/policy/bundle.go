@@ -14,10 +14,27 @@ import (
 // Bundle is a deserialized policy YAML file. One Bundle protects one MCP
 // server; the proxy holds exactly one Bundle for the lifetime of a process.
 type Bundle struct {
-	Version  int        `yaml:"version"`
-	Server   string     `yaml:"server"`
-	Tools    []ToolRule `yaml:"tools"`
-	Defaults Defaults   `yaml:"defaults"`
+	Version         int              `yaml:"version"`
+	Server          string           `yaml:"server"`
+	Tools           []ToolRule       `yaml:"tools"`
+	Defaults        Defaults         `yaml:"defaults"`
+	ResponseFilters *ResponseFilters `yaml:"response_filters,omitempty"`
+}
+
+// ResponseFilters configures sanitization applied to JSON-RPC responses
+// flowing from the upstream MCP server back to the agent. A nil
+// ResponseFilters disables response inspection entirely (the fast path
+// for bundles that don't need it).
+type ResponseFilters struct {
+	Global GlobalResponseFilter `yaml:"global"`
+}
+
+// GlobalResponseFilter applies to every response, regardless of which
+// tool produced it.
+type GlobalResponseFilter struct {
+	StripAnsiEscapes bool     `yaml:"strip_ansi_escapes"`
+	StripZeroWidth   bool     `yaml:"strip_zero_width"`
+	SecretScanners   []string `yaml:"secret_scanners"`
 }
 
 // Defaults controls how the engine handles requests the bundle hasn't
@@ -126,6 +143,14 @@ func (b *Bundle) validate() error {
 		for argName, arg := range t.Arguments {
 			if arg.Type != "" && arg.Type != "string" && arg.Type != "number" && arg.Type != "boolean" {
 				return fmt.Errorf("tool %q arg %q: unsupported type %q", t.Name, argName, arg.Type)
+			}
+		}
+	}
+	if b.ResponseFilters != nil {
+		for _, name := range b.ResponseFilters.Global.SecretScanners {
+			if _, ok := builtinScanners[name]; !ok {
+				return fmt.Errorf("response_filters: unknown secret_scanner %q (available: %s)",
+					name, listScannerNames())
 			}
 		}
 	}

@@ -2,11 +2,13 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -104,6 +106,54 @@ func TestProxy_BlocksDropTable(t *testing.T) {
 	}
 	if string(resp.ID) != "7" {
 		t.Errorf("response id = %s, want 7", string(resp.ID))
+	}
+}
+
+const responseFilterBundle = `
+version: 1
+server: test
+tools:
+  - name: query
+    arguments: {}
+defaults: { unknown_tool: deny, unknown_method: log_and_pass }
+response_filters:
+  global:
+    strip_ansi_escapes: true
+    secret_scanners: [aws_access_key]
+`
+
+func TestProxy_SanitizesResponse(t *testing.T) {
+	// Upstream sends a response with an embedded AWS key. Halberd must
+	// redact it before the client sees the body.
+	upstream := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"db user AKIAIOSFODNN7EXAMPLE"}]}}`))
+	})
+	srv := httptest.NewServer(upstream)
+	defer srv.Close()
+
+	u, _ := url.Parse(srv.URL)
+	bundle, err := policy.ParseBundle([]byte(responseFilterBundle))
+	if err != nil {
+		t.Fatalf("bundle: %v", err)
+	}
+	bus := audit.NewBus(&bytes.Buffer{}, 16)
+	defer func() { _ = bus.Stop(context.Background()) }()
+	h := NewHandler(u, policy.New(bundle), bus)
+
+	w := httptest.NewRecorder()
+	body := []byte(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"query","arguments":{}}}`)
+	r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
+	h.ServeHTTP(w, r)
+
+	if strings.Contains(w.Body.String(), "AKIAIOSFODNN7EXAMPLE") {
+		t.Errorf("AWS key leaked through response inspector: %s", w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), "[REDACTED]") {
+		t.Errorf("redaction placeholder missing: %s", w.Body.String())
+	}
+	if cl := w.Header().Get("Content-Length"); cl != strconv.Itoa(w.Body.Len()) {
+		t.Errorf("Content-Length = %q, want %d", cl, w.Body.Len())
 	}
 }
 

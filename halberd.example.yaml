@@ -37,3 +37,27 @@ defaults:
   # What to do for JSON-RPC methods Halberd doesn't classify (anything other
   # than tools/call, tools/list, resources/*, prompts/*, initialize, ping).
   unknown_method: log_and_pass
+
+# Response inspection (P4). If absent, Halberd does no response-side work
+# and forwards every reply verbatim. When present, every JSON-RPC response
+# from the upstream is parsed and its string leaves are sanitized in place.
+response_filters:
+  global:
+    # Strip ANSI CSI/OSC escape sequences from response text. Tool output
+    # has no legitimate reason to carry terminal-control codes; their
+    # presence is a strong signal of a tool-poisoning payload trying to
+    # hide content from log scrapers.
+    strip_ansi_escapes: true
+
+    # Strip zero-width Unicode (U+200B/C/D, U+2060, U+FEFF). Same
+    # rationale: these characters are invisible but can carry steganographic
+    # payloads or split injection markers across log-readable boundaries.
+    strip_zero_width: true
+
+    # Built-in secret scanners. Each matched value is replaced with
+    # [REDACTED] before the response reaches the agent. Available
+    # scanners: aws_access_key, github_token, rsa_private_key.
+    secret_scanners:
+      - aws_access_key
+      - github_token
+      - rsa_private_key

@@ -13,13 +13,18 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
+	"strings"
 
 	"github.com/Builder106/halberd/internal/audit"
 	"github.com/Builder106/halberd/internal/jsonrpc"
 	"github.com/Builder106/halberd/internal/policy"
 )
 
-const maxRequestBytes = 4 << 20 // 4 MiB ceiling on JSON-RPC envelope
+const (
+	maxRequestBytes  = 4 << 20 // 4 MiB ceiling on JSON-RPC envelope
+	maxResponseBytes = 8 << 20 // 8 MiB ceiling on response body before we buffer
+)
 
 // NewHandler returns an http.Handler that reverse-proxies JSON-RPC requests
 // to target, gating each POST on engine.EvaluateRequest. Decisions are
@@ -38,6 +43,36 @@ func NewHandler(target *url.URL, engine *policy.Engine, bus *audit.Bus) http.Han
 	proxy.Director = func(r *http.Request) {
 		origDirector(r)
 		r.Host = target.Host
+	}
+
+	if engine.HasResponseFilters() {
+		proxy.ModifyResponse = func(resp *http.Response) error {
+			// SSE responses stream multiple JSON-RPC messages and can't be
+			// safely buffered as a whole. v0.1 of response inspection skips
+			// them; the v0.2 roadmap adds per-event inspection.
+			if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/event-stream") {
+				return nil
+			}
+			body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes))
+			if err != nil {
+				return err
+			}
+			_ = resp.Body.Close()
+
+			result := engine.EvaluateResponse(body)
+			if len(result.Detections) > 0 {
+				bus.Record(audit.Event{
+					Direction:  "response",
+					Violations: result.Detections,
+				})
+			}
+
+			payload := result.Payload
+			resp.Body = io.NopCloser(bytes.NewReader(payload))
+			resp.ContentLength = int64(len(payload))
+			resp.Header.Set("Content-Length", strconv.Itoa(len(payload)))
+			return nil
+		}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

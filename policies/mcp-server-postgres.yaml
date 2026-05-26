@@ -31,3 +31,12 @@ tools:
 defaults:
   unknown_tool: deny
   unknown_method: log_and_pass
+
+response_filters:
+  global:
+    strip_ansi_escapes: true
+    strip_zero_width: true
+    secret_scanners:
+      - aws_access_key
+      - github_token
+      - rsa_private_key
