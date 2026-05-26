@@ -19,6 +19,7 @@ linters:
       excludes:
         - G304  # file inclusion via variable (intentional in policy.LoadBundle)
         - G204  # subprocess with variable args (the CLI contract of halberd-stdio)
+        - G101  # hardcoded credentials (AWS-documented example values used as scanner-test fixtures)
 
 formatters:
   enable:
