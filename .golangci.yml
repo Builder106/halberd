@@ -18,6 +18,7 @@ linters:
     gosec:
       excludes:
         - G304  # file inclusion via variable (intentional in policy.LoadBundle)
+        - G204  # subprocess with variable args (the CLI contract of halberd-stdio)
 
 formatters:
   enable:
