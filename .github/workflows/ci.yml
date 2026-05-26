@@ -12,9 +12,9 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           # Pinned to 1.25 because golangci-lint 2.12.2 (current) was built
           # with 1.25 and cannot parse 1.26's stdlib export data. The Go team
@@ -44,9 +44,9 @@ jobs:
   bench:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           # Pinned to 1.25 because golangci-lint 2.12.2 (current) was built
           # with 1.25 and cannot parse 1.26's stdlib export data. The Go team
@@ -59,7 +59,7 @@ jobs:
         run: go test -run=^$ -bench=. -benchmem -benchtime=2s ./internal/policy | tee bench.txt
 
       - name: upload benchmark output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bench
           path: bench.txt
@@ -67,9 +67,9 @@ jobs:
   govulncheck:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           # Pinned to 1.25 because golangci-lint 2.12.2 (current) was built
           # with 1.25 and cannot parse 1.26's stdlib export data. The Go team
@@ -87,9 +87,9 @@ jobs:
   golangci-lint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           # Pinned to 1.25 because golangci-lint 2.12.2 (current) was built
           # with 1.25 and cannot parse 1.26's stdlib export data. The Go team

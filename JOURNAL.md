@@ -4,6 +4,49 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — P5 rule packs + hardening shipped (v0.1 feature-complete) #milestone
+
+Three new rule packs land alongside the existing postgres pack:
+`mcp-server-{filesystem,git,github}`. 28 declared tools total across the
+four packs, 19 table-driven scenarios in
+`internal/policy/packs_test.go` covering both block-and-allow paths.
+Each pack is calibrated against a specific threat set documented in the
+file header, not a generic "all tools allowed" stance — write-mutating
+tools default to denied, array-arg tools are omitted (v0.1 DSL is
+scalar-only), and the github pack ships with a `your-org` placeholder
+operators must edit before deploying.
+
+Hardening that came along for the ride:
+- **`internal/audit/bus_test.go`**: 9 tests covering JSONL framing, time
+  stamping, drop-when-full, post-Stop drop semantics, Stop idempotence,
+  ctx-deadline honoring, nil-ctx safety, and a conservation property
+  (sent == written + dropped) under 16-goroutine × 256-record load.
+  Closed the bus's zero-coverage gap.
+- **CI actions bumped to Node-24-native majors** ahead of the June 2,
+  2026 deadline: `actions/checkout@v5`, `actions/setup-go@v6`,
+  `actions/upload-artifact@v5`. The deprecation warnings drop;
+  `golangci/golangci-lint-action@v7` stays put for now (v7 was the
+  latest as of the migration to golangci-lint v2 last week).
+
+v0.1 covers four of the five threat categories (T1, T2, T4, T5) over
+both HTTP and stdio transports. T3 (out-of-scope I/O) is the v0.2
+roadmap. Halberd is feature-complete for v0.1.
+
+## 2026-05-26 — Bus.Record race: random select biased the post-Stop drop #incident
+
+The first audit-bus tests exposed a subtle correctness gap: `Bus.Record`
+used a single select that watched `<-done`, the buffered send, and a
+default branch all as peers. Go picks randomly among ready cases, so a
+post-Stop Record sometimes landed in the still-buffered channel rather
+than dropping — but the drain goroutine had already exited, so that
+event was silently lost (neither written nor counted). Fix: split into a
+priority check on `done` first (return early if closed), then a
+non-blocking send attempt. Now Record's contract is "after Stop, every
+event is counted as dropped" without race. Lesson: when a select has a
+done-signal AND a buffered-send case, the done-signal must be checked
+first — otherwise Go's random selection silently breaks the priority
+invariant operators expect.
+
 ## 2026-05-26 — P4 response inspection shipped #milestone #decision
 
 Halberd now sanitizes JSON-RPC responses in both transports: T1 (tool

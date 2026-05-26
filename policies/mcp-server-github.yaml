@@ -1,0 +1,127 @@
+# Halberd rule pack for the @modelcontextprotocol/server-github reference
+# server. Threats this bundle is calibrated against:
+#
+#   T3 — Out-of-scope I/O: posting issues / PRs / comments to repositories
+#        outside the operator's organization. Mitigated by the `owner`
+#        allowlist below. **Edit `allow_values` before deploying.**
+#   T2 — Repo-name argument injection: shell metacharacters or path
+#        traversal in `repo` or `path`.
+#   T5 — Exfiltration via response: PR / issue / file-content bodies that
+#        contain secrets.
+#
+# State-mutating tools (`merge_pull_request`, `create_or_update_file`,
+# `push_files`, `create_pull_request`, `create_issue`, `add_issue_comment`)
+# are evaluated through Halberd but kept on a short leash: bodies and titles
+# are length-capped, repo and owner are constrained. Truly dangerous tools
+# the agent should never call (delete_repository, transfer_repository, etc.)
+# are omitted entirely; the `unknown_tool: deny` default blocks them.
+#
+# Customize this file: replace `your-org` in the `owner` allow_values list
+# below with your actual GitHub org slug(s). Without that edit, every call
+# fails the allowlist check.
+
+version: 1
+server: mcp-server-github
+
+_anchors:
+  owner_arg: &owner_arg
+    type: string
+    max_length: 64
+    allow_values:
+      - your-org    # <-- EDIT: replace with your org / user slug(s)
+
+  repo_arg: &repo_arg
+    type: string
+    max_length: 128
+    deny_patterns:
+      - '[^A-Za-z0-9_.-]'   # only repo-name-legal chars (per GitHub's rules)
+
+  number_arg: &number_arg
+    type: number
+
+  body_arg: &body_arg
+    type: string
+    max_length: 16384
+
+  title_arg: &title_arg
+    type: string
+    max_length: 256
+
+  path_arg: &path_arg
+    type: string
+    max_length: 4096
+    deny_patterns:
+      - '^/'
+      - '(^|/)\.\.(/|$)'
+      - '\x00'
+
+  state_arg: &state_arg
+    type: string
+    allow_values: [open, closed, all]
+
+tools:
+  # Read-only — safe to allow broadly within the owner allowlist.
+  - name: get_issue
+    arguments:
+      owner: *owner_arg
+      repo: *repo_arg
+      issue_number: *number_arg
+
+  - name: list_issues
+    arguments:
+      owner: *owner_arg
+      repo: *repo_arg
+      state: *state_arg
+
+  - name: get_pull_request
+    arguments:
+      owner: *owner_arg
+      repo: *repo_arg
+      pull_number: *number_arg
+
+  - name: list_pull_requests
+    arguments:
+      owner: *owner_arg
+      repo: *repo_arg
+      state: *state_arg
+
+  - name: get_file_contents
+    arguments:
+      owner: *owner_arg
+      repo: *repo_arg
+      path: *path_arg
+
+  - name: search_issues
+    arguments:
+      q:
+        type: string
+        max_length: 512
+
+  # Write — allowed but length-capped. Operators who don't want agents
+  # writing to GitHub at all should delete these entries.
+  - name: create_issue
+    arguments:
+      owner: *owner_arg
+      repo: *repo_arg
+      title: *title_arg
+      body: *body_arg
+
+  - name: add_issue_comment
+    arguments:
+      owner: *owner_arg
+      repo: *repo_arg
+      issue_number: *number_arg
+      body: *body_arg
+
+defaults:
+  unknown_tool: deny
+  unknown_method: log_and_pass
+
+response_filters:
+  global:
+    strip_ansi_escapes: true
+    strip_zero_width: true
+    secret_scanners:
+      - aws_access_key
+      - github_token
+      - rsa_private_key

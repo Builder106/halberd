@@ -1,0 +1,85 @@
+# Halberd rule pack for the @modelcontextprotocol/server-filesystem reference
+# server. Threats this bundle is calibrated against:
+#
+#   T2 — Argument injection via path traversal (`../../etc/shadow`),
+#        absolute-path escapes (`/etc/passwd`), home-dir expansion (`~/.ssh`),
+#        and null-byte injection.
+#   T5 — Exfiltration via response: secrets in file contents the agent reads
+#        (AWS / GitHub / RSA private keys).
+#
+# Tools that take array arguments (`read_multiple_files.paths`,
+# `edit_file.edits`) are NOT declared here; v0.1's DSL only validates scalar
+# arguments, so allowing them would create a bypass. The default
+# `unknown_tool: deny` blocks them; the agent must use the scalar-arg
+# equivalents instead.
+
+version: 1
+server: mcp-server-filesystem
+
+# YAML anchors deduplicate the per-path constraint set. yaml.v3 dereferences
+# them during parsing; Halberd's loader sees the expanded values.
+_anchors:
+  path_arg: &path_arg
+    type: string
+    max_length: 4096
+    deny_patterns:
+      - '^/'              # absolute path: filesystem root must be operator-supplied
+      - '(^|/)\.\.(/|$)'  # path traversal
+      - '^~'              # home-directory expansion
+      - '\x00'            # null-byte injection (some libc path APIs truncate)
+
+tools:
+  - name: read_file
+    arguments:
+      path: *path_arg
+
+  - name: write_file
+    arguments:
+      path: *path_arg
+      content:
+        type: string
+        max_length: 1048576  # 1 MiB ceiling per write
+
+  - name: create_directory
+    arguments:
+      path: *path_arg
+
+  - name: list_directory
+    arguments:
+      path: *path_arg
+
+  - name: directory_tree
+    arguments:
+      path: *path_arg
+
+  - name: get_file_info
+    arguments:
+      path: *path_arg
+
+  - name: list_allowed_directories
+    arguments: {}
+
+  - name: search_files
+    arguments:
+      path: *path_arg
+      pattern:
+        type: string
+        max_length: 256
+
+  - name: move_file
+    arguments:
+      source: *path_arg
+      destination: *path_arg
+
+defaults:
+  unknown_tool: deny
+  unknown_method: log_and_pass
+
+response_filters:
+  global:
+    strip_ansi_escapes: true
+    strip_zero_width: true
+    secret_scanners:
+      - aws_access_key
+      - github_token
+      - rsa_private_key

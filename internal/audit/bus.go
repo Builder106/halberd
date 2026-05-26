@@ -61,6 +61,12 @@ func NewBus(sink io.Writer, buf int) *Bus {
 // Record enqueues an event. Safe to call from any goroutine. After Stop
 // has been called, or when the buffer is full, the event is counted as
 // dropped and Record returns immediately.
+//
+// The done-channel check happens before the send attempt rather than as
+// a peer in a single select. Otherwise Go's random selection between
+// ready cases would let a post-Stop Record land in the still-buffered
+// channel — observable to operators as a "vanished" event because the
+// drain goroutine has already exited.
 func (b *Bus) Record(e Event) {
 	if e.Time.IsZero() {
 		e.Time = time.Now().UTC()
@@ -68,6 +74,10 @@ func (b *Bus) Record(e Event) {
 	select {
 	case <-b.done:
 		b.dropped.Add(1)
+		return
+	default:
+	}
+	select {
 	case b.ch <- e:
 	default:
 		b.dropped.Add(1)

@@ -69,6 +69,15 @@ go build -o bin/ ./cmd/...
 ./bin/halberd lint policies/mcp-server-postgres.yaml
 ```
 
+### Bundled rule packs
+
+| Pack | Threats covered | Note |
+|---|---|---|
+| [`mcp-server-postgres.yaml`](policies/mcp-server-postgres.yaml) | T2 (DROP/TRUNCATE/COPY-from-program/`pg_read_server_files`), T5 (secrets in result rows) | Ready to use as-is |
+| [`mcp-server-filesystem.yaml`](policies/mcp-server-filesystem.yaml) | T2 (path traversal, absolute paths, home-dir expansion, null-byte injection), T5 (secrets in file contents) | Array-arg tools (`read_multiple_files`, `edit_file`) intentionally denied — v0.1 DSL is scalar-only |
+| [`mcp-server-git.yaml`](policies/mcp-server-git.yaml) | T2 (`--upload-pack=…`-style long-opt smuggling in ref/branch names; path traversal in `repo_path`), T5 | State-mutating tools (`commit`, `add`, `reset`, `init`) denied by default |
+| [`mcp-server-github.yaml`](policies/mcp-server-github.yaml) | T3 (owner-outside-allowlist; **edit `your-org` before deploying**), T2 (repo-name shell metacharacters), T5 | Truly dangerous tools (`delete_repository`, `transfer_repository`) omitted entirely |
+
 ### Option A — remote MCP server (HTTP transport)
 
 ```bash
@@ -140,7 +149,7 @@ Full reference: [docs/policy-dsl.md](docs/policy-dsl.md).
 | **P2** — Policy engine, deny-pattern blocking, T2 + T4 coverage | shipped in v0.1 | YAML bundles, regex denylist, capability-creep guard |
 | **P3** — stdio transport | shipped in v0.1 | `halberd-stdio` MITMs local MCP servers (Claude Desktop, Cursor, Windsurf) over line-delimited JSON-RPC |
 | **P4** — Response inspection | shipped in v0.1 | JSON-tree walk on every response: strip ANSI / zero-width Unicode, redact AWS / GitHub / RSA secrets. T1 + T5 coverage. (SSE per-event inspection on v0.2 roadmap.) |
-| **P5** — Rule packs + hardening | planned | Pre-built bundles for filesystem / git / postgres / github |
+| **P5** — Rule packs + hardening | shipped in v0.1 | Pre-built bundles for `mcp-server-{filesystem,git,github,postgres}`; per-pack threat tests; audit-bus coverage closed; CI actions bumped to Node-24-native versions. |
 
 ## Performance
 

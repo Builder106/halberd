@@ -1,0 +1,89 @@
+# Halberd rule pack for the @modelcontextprotocol/server-git reference
+# server. Threats this bundle is calibrated against:
+#
+#   T2 — Argument injection via ref/branch names starting with `-` (long-opt
+#        smuggling: `--upload-pack=ssh://attacker/...`, `--config=...`).
+#        CVE-2022-39253, CVE-2022-23521, and the broader "git ref/url arg
+#        smuggling" family are mitigated by refusing any ref that doesn't
+#        look like a ref.
+#   T2 — repo_path traversal (same constraints as the filesystem pack).
+#   T5 — Exfiltration via response: log/diff/show output containing secrets.
+#
+# State-mutating tools (`git_commit`, `git_add`, `git_reset`, `git_init`) are
+# NOT declared. The default `unknown_tool: deny` blocks them. Operators who
+# need write access copy this bundle and add the specific tools they trust
+# after deliberate review.
+
+version: 1
+server: mcp-server-git
+
+_anchors:
+  path_arg: &path_arg
+    type: string
+    max_length: 4096
+    deny_patterns:
+      - '^/'
+      - '(^|/)\.\.(/|$)'
+      - '^~'
+      - '\x00'
+
+  ref_arg: &ref_arg
+    type: string
+    max_length: 256
+    deny_patterns:
+      - '^-'      # any leading dash: long-opt smuggling via ref name
+      - '\s'      # whitespace in a ref is suspicious
+      - '\x00'
+
+tools:
+  - name: git_status
+    arguments:
+      repo_path: *path_arg
+
+  - name: git_diff_unstaged
+    arguments:
+      repo_path: *path_arg
+
+  - name: git_diff_staged
+    arguments:
+      repo_path: *path_arg
+
+  - name: git_diff
+    arguments:
+      repo_path: *path_arg
+      target: *ref_arg
+
+  - name: git_log
+    arguments:
+      repo_path: *path_arg
+      max_count:
+        type: number
+
+  - name: git_show
+    arguments:
+      repo_path: *path_arg
+      revision: *ref_arg
+
+  - name: git_create_branch
+    arguments:
+      repo_path: *path_arg
+      branch_name: *ref_arg
+      base_branch: *ref_arg
+
+  - name: git_checkout
+    arguments:
+      repo_path: *path_arg
+      branch_name: *ref_arg
+
+defaults:
+  unknown_tool: deny
+  unknown_method: log_and_pass
+
+response_filters:
+  global:
+    strip_ansi_escapes: true
+    strip_zero_width: true
+    secret_scanners:
+      - aws_access_key
+      - github_token
+      - rsa_private_key
