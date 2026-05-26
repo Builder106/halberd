@@ -4,6 +4,22 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — Full green CI after four iterations #milestone
+
+After the initial red run, four follow-up commits to get all four jobs
+(test, bench, govulncheck, golangci-lint) green: (1) bumped Go from 1.22
+to stable for stdlib CVE fixes, (2) discovered golangci-lint 2.12.2 was
+built with Go 1.25 and can't parse 1.26's stdlib export data — pinned CI
+to 1.25 (still in N-1 patch support), (3) bumped golangci-lint-action v6
+→ v7 (v6 doesn't support golangci-lint v2 — CI told me directly), (4)
+migrated `.golangci.yml` to v2 schema (formatters split out, `version: "2"`
+discriminator), fixed gofmt struct-tag alignment, tightened audit-log
+file mode to 0o600 (gosec G302), and added doc comments on every
+exported identifier in `internal/audit`, `internal/jsonrpc`,
+`internal/policy`, and `internal/transport/http`. Lesson: golangci-lint
+loses races with the Go release cycle reliably — always pin to N-1
+unless you've verified support for current. Final green run: 26460291188.
+
 ## 2026-05-26 — First CI run red on stdlib CVEs and lint nits #incident #decision
 
 First push of the scaffold tripped govulncheck because CI pinned Go 1.22,
