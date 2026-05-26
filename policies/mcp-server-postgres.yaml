@@ -1,0 +1,33 @@
+version: 1
+server: mcp-server-postgres
+tools:
+  - name: query
+    arguments:
+      sql:
+        type: string
+        max_length: 8192
+        deny_patterns:
+          - '(?i)\bdrop\s+(table|database|schema|index|view)\b'
+          - '(?i)\btruncate\s+table\b'
+          - '(?i)\bdelete\s+from\b'
+          - '(?i)\bgrant\s+'
+          - '(?i)\brevoke\s+'
+          - '(?i)\bcopy\s+\S+\s+(to|from)\s+program\b'
+          - '(?i)pg_read_server_files\s*\('
+          - '(?i)pg_read_binary_file\s*\('
+          - ';\s*(--|\#)'
+
+  - name: list_tables
+    arguments: {}
+
+  - name: describe_table
+    arguments:
+      table_name:
+        type: string
+        max_length: 128
+        deny_patterns:
+          - '[;\s]'
+
+defaults:
+  unknown_tool: deny
+  unknown_method: log_and_pass

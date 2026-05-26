@@ -1,0 +1,39 @@
+# halberd.example.yaml — minimal annotated policy bundle.
+# Copy this file to `halberd.yaml`, edit, and validate with `halberd lint halberd.yaml`.
+
+version: 1
+
+# Human-readable name of the MCP server this bundle protects. Free-form; used
+# only in audit log entries and the proxy's startup banner.
+server: example-mcp-server
+
+tools:
+  # Every tool the agent is allowed to call must appear here. Tools not listed
+  # are rejected when `defaults.unknown_tool` is "deny" (see below).
+  - name: echo
+    arguments:
+      message:
+        type: string
+        max_length: 1024
+        # deny_patterns are evaluated against the raw string value of the
+        # argument. Any match blocks the request.
+        deny_patterns:
+          - '(?i)<\|im_start\|>'   # role-tag spoofing
+          - '\x1b\['               # ANSI escape sequences
+
+  - name: lookup
+    arguments:
+      kind:
+        type: string
+        # allow_values is a strict enum; if non-empty, only listed values pass.
+        allow_values: [user, group, role]
+
+defaults:
+  # What to do when a tool isn't listed above.
+  #   deny         -- block and return a JSON-RPC error
+  #   log_and_pass -- forward but record an audit entry
+  unknown_tool: deny
+
+  # What to do for JSON-RPC methods Halberd doesn't classify (anything other
+  # than tools/call, tools/list, resources/*, prompts/*, initialize, ping).
+  unknown_method: log_and_pass

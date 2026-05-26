@@ -1,0 +1,4 @@
+/bin/
+/halberd.yaml
+*.jsonl
+.DS_Store

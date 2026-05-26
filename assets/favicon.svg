@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#7c4dff"/>
+      <stop offset="100%" stop-color="#0099d6"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#f6f8fa"/>
+      <stop offset="100%" stop-color="#aab8cc"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+
+  <!-- Pole -->
+  <rect x="30" y="10" width="4" height="44" fill="#1a2230"/>
+
+  <!-- Spike -->
+  <polygon points="32,4 28,10 36,10" fill="url(#steel)" stroke="#0a0e14" stroke-width="0.75"/>
+
+  <!-- Axe blade (left) -->
+  <path d="M 30 14
+           Q 8 18 4 30
+           Q 12 32 18 32
+           L 30 30
+           Z"
+        fill="url(#steel)" stroke="#0a0e14" stroke-width="1"/>
+
+  <!-- Beak (right) -->
+  <path d="M 34 14
+           Q 52 18 56 28
+           Q 48 30 42 28
+           L 34 26
+           Z"
+        fill="url(#steel)" stroke="#0a0e14" stroke-width="1"/>
+
+  <!-- Pommel -->
+  <circle cx="32" cy="54" r="4" fill="#1a2230"/>
+</svg>

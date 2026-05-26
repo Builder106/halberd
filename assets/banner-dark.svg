@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0e14"/>
+      <stop offset="100%" stop-color="#10161e"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#dde6f0"/>
+      <stop offset="50%" stop-color="#9aabbe"/>
+      <stop offset="100%" stop-color="#5e6e80"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"  stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c4dff"/>
+      <stop offset="100%" stop-color="#00d4ff"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1c2530" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="420" fill="url(#bg)"/>
+  <rect width="1200" height="420" fill="url(#grid)" opacity="0.6"/>
+
+  <!-- Halberd mark, centered around x=220 -->
+  <g transform="translate(220 210)">
+    <!-- Pole -->
+    <rect x="-6" y="-160" width="12" height="320" fill="#3a4a5e" rx="2"/>
+    <rect x="-6" y="-160" width="6"  height="320" fill="#202b3a" rx="2"/>
+
+    <!-- Spike (top) -->
+    <polygon points="0,-200 -10,-160 10,-160" fill="url(#steel)" stroke="#0a0e14" stroke-width="1"/>
+
+    <!-- Axe blade (left) -->
+    <path d="M -10 -140
+             Q -75 -120 -95 -70
+             Q -85 -55 -60 -50
+             L -10 -55
+             Z"
+          fill="url(#steel)" stroke="#0a0e14" stroke-width="1.5"/>
+    <path d="M -95 -70 Q -85 -55 -60 -50" fill="none" stroke="url(#edge)" stroke-width="2"/>
+
+    <!-- Beak / hook (right) -->
+    <path d="M 10 -140
+             Q 50 -120 65 -90
+             Q 55 -75 35 -75
+             L 10 -90
+             Z"
+          fill="url(#steel)" stroke="#0a0e14" stroke-width="1.5"/>
+
+    <!-- Cross-guard band -->
+    <rect x="-22" y="-50" width="44" height="14" rx="3" fill="#5e6e80" stroke="#0a0e14" stroke-width="1"/>
+    <rect x="-22" y="-50" width="44" height="3"  fill="#dde6f0" opacity="0.7"/>
+
+    <!-- Pommel -->
+    <circle cx="0" cy="155" r="10" fill="#5e6e80" stroke="#0a0e14" stroke-width="1"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(430 210)">
+    <text x="0" y="-30"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif"
+          font-size="96"
+          font-weight="800"
+          letter-spacing="-2"
+          fill="#f0f4f8">HALBERD</text>
+
+    <rect x="2" y="-12" width="120" height="3" fill="url(#accent)"/>
+
+    <text x="0" y="40"
+          font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif"
+          font-size="26"
+          font-weight="500"
+          fill="#9aabbe">A JSON-RPC firewall for MCP agents.</text>
+
+    <text x="0" y="96"
+          font-family="ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace"
+          font-size="18"
+          fill="#5e6e80">tools/call → policy → audit → upstream</text>
+  </g>
+
+  <!-- Subtle status pill: green dot + 'blocked' tag -->
+  <g transform="translate(1080 60)">
+    <rect x="-90" y="-18" width="100" height="32" rx="16" fill="#1c2530" stroke="#2a3543" stroke-width="1"/>
+    <circle cx="-72" cy="-2" r="5" fill="#00d4ff"/>
+    <text x="-58" y="3"
+          font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+          font-size="13"
+          fill="#9aabbe">v0.1</text>
+  </g>
+</svg>
