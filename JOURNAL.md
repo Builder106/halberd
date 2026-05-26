@@ -4,6 +4,41 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — P3 stdio transport shipped #milestone #decision
+
+Halberd now wraps stdio MCP servers (Claude Desktop, Cursor, Windsurf).
+The `halberd-stdio` binary forks the real server, owns its stdin/stdout/
+stderr pipes, and runs the policy engine between the host and child in
+both directions. Three correctness decisions worth recording:
+
+- **Plain pipes, not a PTY.** MCP stdio is line-delimited JSON-RPC with
+  no terminal semantics, and a PTY's line-discipline translation would
+  silently corrupt binary content in tool arguments. Earlier planning
+  notes called this a "PTY wrapper" — the implementation is `exec.Cmd`
+  pipes with newline framing.
+- **Blocked notifications drop silently.** JSON-RPC notifications have
+  no `id` and the spec forbids a response, so a blocked notification is
+  audited but produces no synthetic error. Blocked requests (with `id`)
+  still get a `-32000` JSON-RPC error response with the original id
+  preserved.
+- **Audit log requires a `--path` flag.** Defaulting to stderr would
+  collide with the child server's stderr (which we transparently forward
+  to the host), corrupting the audit stream. Operator-aware path is the
+  safe default.
+
+## 2026-05-26 — Audit bus send-on-closed-channel race fixed #incident
+
+The new stdio tests caught a real bug in `internal/audit`: `Bus.Stop`
+called `close(b.ch)` while `Bus.Record` was still selecting on
+`b.ch <- e`. The race detector flagged it; in production this would
+panic intermittently when a transport's `Stop` raced with an in-flight
+audit. Fixed by switching to a `done` channel — `Stop` closes `done`,
+`Record` selects on `done` first and counts a dropped event if the bus
+has stopped, and the channel itself is never closed. Property tested
+under `-race`: 0 panics across the full suite. Lesson: never close a
+channel that has multiple senders without a happens-before guarantee on
+all of them.
+
 ## 2026-05-26 — Full green CI after four iterations #milestone
 
 After the initial red run, four follow-up commits to get all four jobs

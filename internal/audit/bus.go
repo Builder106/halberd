@@ -29,8 +29,13 @@ type Event struct {
 // Bus is a non-blocking audit sink: callers push Events on the hot path,
 // a single goroutine drains them to JSONL. Events are dropped (not blocked
 // on) when the buffer fills, with a count exposed via Dropped().
+//
+// Bus uses a done-channel teardown rather than closing the event channel,
+// so Record never risks a send-on-closed-channel panic when Stop races
+// with an in-flight record.
 type Bus struct {
 	ch       chan Event
+	done     chan struct{}
 	dropped  atomic.Uint64
 	sink     io.Writer
 	wg       sync.WaitGroup
@@ -45,6 +50,7 @@ func NewBus(sink io.Writer, buf int) *Bus {
 	}
 	b := &Bus{
 		ch:   make(chan Event, buf),
+		done: make(chan struct{}),
 		sink: sink,
 	}
 	b.wg.Add(1)
@@ -52,38 +58,41 @@ func NewBus(sink io.Writer, buf int) *Bus {
 	return b
 }
 
-// Record enqueues an event. Safe to call from any goroutine. Drops on
-// overflow rather than blocking the caller.
+// Record enqueues an event. Safe to call from any goroutine. After Stop
+// has been called, or when the buffer is full, the event is counted as
+// dropped and Record returns immediately.
 func (b *Bus) Record(e Event) {
 	if e.Time.IsZero() {
 		e.Time = time.Now().UTC()
 	}
 	select {
+	case <-b.done:
+		b.dropped.Add(1)
 	case b.ch <- e:
 	default:
 		b.dropped.Add(1)
 	}
 }
 
-// Dropped returns the cumulative count of events dropped because the channel
-// was full when Record was called.
+// Dropped returns the cumulative count of events dropped either because
+// the buffer was full or because Record was called after Stop.
 func (b *Bus) Dropped() uint64 {
 	return b.dropped.Load()
 }
 
-// Stop closes the bus and waits for the drain goroutine to flush remaining
-// events, bounded by ctx. Calling Stop more than once is a no-op.
+// Stop signals the drain goroutine to flush remaining buffered events and
+// exit. Returns when the drain has exited or ctx is cancelled. Idempotent.
 func (b *Bus) Stop(ctx context.Context) error {
 	b.stopOnce.Do(func() {
-		close(b.ch)
+		close(b.done)
 	})
-	done := make(chan struct{})
+	waitDone := make(chan struct{})
 	go func() {
 		b.wg.Wait()
-		close(done)
+		close(waitDone)
 	}()
 	select {
-	case <-done:
+	case <-waitDone:
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
@@ -93,9 +102,26 @@ func (b *Bus) Stop(ctx context.Context) error {
 func (b *Bus) drain() {
 	defer b.wg.Done()
 	enc := json.NewEncoder(b.sink)
-	for ev := range b.ch {
-		if err := enc.Encode(ev); err != nil {
-			slog.Error("audit sink write failed", "error", err)
+	for {
+		select {
+		case <-b.done:
+			// Drain whatever's already buffered, then exit. Events still
+			// in flight in Record may slip past — that's acceptable; the
+			// hot-path contract is best-effort, not all-or-nothing.
+			for {
+				select {
+				case ev := <-b.ch:
+					if err := enc.Encode(ev); err != nil {
+						slog.Error("audit sink write failed", "error", err)
+					}
+				default:
+					return
+				}
+			}
+		case ev := <-b.ch:
+			if err := enc.Encode(ev); err != nil {
+				slog.Error("audit sink write failed", "error", err)
+			}
 		}
 	}
 }

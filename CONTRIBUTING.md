@@ -13,13 +13,22 @@ go mod tidy
 go test ./...
 ```
 
-To run the proxy against a local MCP server:
+To run the HTTP proxy against a remote MCP server:
 
 ```bash
 go build -o bin/halberd-http ./cmd/halberd-http
 ./bin/halberd-http --policy policies/mcp-server-postgres.yaml \
                    --target  http://localhost:8080 \
                    --listen  :9090
+```
+
+To wrap a local stdio MCP server (Claude Desktop / Cursor style):
+
+```bash
+go build -o bin/halberd-stdio ./cmd/halberd-stdio
+./bin/halberd-stdio --policy policies/mcp-server-postgres.yaml \
+                    --audit  halberd-stdio.jsonl \
+                    -- mcp-server-postgres --conn-string "$PG_CONN"
 ```
 
 ## Project-specific guardrails

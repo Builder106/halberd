@@ -32,8 +32,8 @@ Halberd defends that boundary against five concrete threats:
 | T4 | Capability creep | A server pushes `tools/list_changed` mid-session; a new, unvetted tool appears and gets called |
 | T5 | Exfiltration via response | A tool response carries SSH keys, env vars, or other secrets back into the model context |
 
-v0.1 ships full request-side coverage of **T2** and **T4**. T1, T3, and T5
-are the v0.2 roadmap.
+v0.1 ships full request-side coverage of **T2** and **T4** over both
+**HTTP** and **stdio** transports. T1, T3, and T5 are the v0.2 roadmap.
 
 ## How it works
 
@@ -67,8 +67,11 @@ go build -o bin/ ./cmd/...
 
 # Validate a policy bundle:
 ./bin/halberd lint policies/mcp-server-postgres.yaml
+```
 
-# Run the proxy in front of a postgres MCP server:
+### Option A — remote MCP server (HTTP transport)
+
+```bash
 ./bin/halberd-http \
   --policy policies/mcp-server-postgres.yaml \
   --target http://localhost:8080 \
@@ -76,10 +79,37 @@ go build -o bin/ ./cmd/...
   --audit  halberd.jsonl
 ```
 
-Now point your MCP client at `http://localhost:9090` instead of the
-postgres server. Every `tools/call` is logged to `halberd.jsonl`. Try a
-`DROP TABLE` from the agent — it'll come back as a JSON-RPC error before
-the request ever reaches postgres.
+Point your MCP client at `http://localhost:9090` instead of the postgres
+server. Every `tools/call` is logged. Try a `DROP TABLE` — Halberd
+returns a JSON-RPC error before the request reaches postgres.
+
+### Option B — local stdio server (Claude Desktop, Cursor, Windsurf)
+
+Drop `halberd-stdio` into the host's MCP server config in place of the
+real server command. For Claude Desktop, edit
+`~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "/usr/local/bin/halberd-stdio",
+      "args": [
+        "--policy", "/etc/halberd/postgres.yaml",
+        "--audit",  "/var/log/halberd/postgres.jsonl",
+        "--",
+        "mcp-server-postgres", "--conn-string", "postgresql://..."
+      ]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. Every JSON-RPC message between Claude and
+`mcp-server-postgres` now flows through Halberd. Argument-injection
+attempts (`DROP TABLE`, statement chaining via `; --`, etc.) come back
+to Claude as JSON-RPC errors that the model can reason about, and the
+upstream server never sees the blocked payload.
 
 ## Policy DSL
 
@@ -108,7 +138,7 @@ Full reference: [docs/policy-dsl.md](docs/policy-dsl.md).
 |---|---|---|
 | **P1** — HTTP reverse proxy + audit bus | shipped in v0.1 | `halberd-http` forwards JSON-RPC, logs every decision |
 | **P2** — Policy engine, deny-pattern blocking, T2 + T4 coverage | shipped in v0.1 | YAML bundles, regex denylist, capability-creep guard |
-| **P3** — stdio transport | planned | PTY wrapper for local MCP servers (Claude Desktop, Cursor) |
+| **P3** — stdio transport | shipped in v0.1 | `halberd-stdio` MITMs local MCP servers (Claude Desktop, Cursor, Windsurf) over line-delimited JSON-RPC |
 | **P4** — Response inspection | planned | SSE-aware streaming inspection, T1 + T5 coverage |
 | **P5** — Rule packs + hardening | planned | Pre-built bundles for filesystem / git / postgres / github |
 
@@ -128,11 +158,13 @@ Reproduce locally with `go test -bench=. -benchmem ./internal/policy`.
 ## Architecture
 
 - [`cmd/halberd-http`](cmd/halberd-http/main.go) — the reverse-proxy binary
+- [`cmd/halberd-stdio`](cmd/halberd-stdio/main.go) — the stdio MITM wrapper binary
 - [`cmd/halberd`](cmd/halberd/main.go) — operator CLI (`halberd lint …`)
 - [`internal/policy`](internal/policy/) — IO-free policy engine
 - [`internal/jsonrpc`](internal/jsonrpc/) — JSON-RPC 2.0 envelope + error synthesis
 - [`internal/audit`](internal/audit/) — non-blocking audit bus → JSONL
 - [`internal/transport/http`](internal/transport/http/) — `httputil.ReverseProxy` wrapper
+- [`internal/transport/stdio`](internal/transport/stdio/) — bidirectional JSON-RPC pipe with policy MITM
 - [`policies/`](policies/) — rule packs (data, not code)
 
 ## Related work
