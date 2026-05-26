@@ -1,3 +1,6 @@
+// Package policy contains Halberd's IO-free policy engine: YAML bundle
+// loading, regex denylist compilation, and the per-request evaluator that
+// the HTTP and stdio transports call on the hot path.
 package policy
 
 import (
@@ -8,6 +11,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Bundle is a deserialized policy YAML file. One Bundle protects one MCP
+// server; the proxy holds exactly one Bundle for the lifetime of a process.
 type Bundle struct {
 	Version  int        `yaml:"version"`
 	Server   string     `yaml:"server"`
@@ -15,16 +20,24 @@ type Bundle struct {
 	Defaults Defaults   `yaml:"defaults"`
 }
 
+// Defaults controls how the engine handles requests the bundle hasn't
+// explicitly classified.
 type Defaults struct {
 	UnknownTool   string `yaml:"unknown_tool"`
 	UnknownMethod string `yaml:"unknown_method"`
 }
 
+// ToolRule is the policy for one MCP tool (one entry under `tools:` in the
+// YAML). A ToolRule with an empty Arguments map allows every call to that
+// tool unconditionally.
 type ToolRule struct {
 	Name      string                  `yaml:"name"`
 	Arguments map[string]ArgumentRule `yaml:"arguments"`
 }
 
+// ArgumentRule constrains one argument of one tool. All non-zero fields are
+// AND-combined: an argument must pass type, length, allow_values, and every
+// deny_pattern.
 type ArgumentRule struct {
 	Type         string   `yaml:"type"`
 	DenyPatterns []string `yaml:"deny_patterns"`
@@ -35,12 +48,17 @@ type ArgumentRule struct {
 	allowSet     map[string]struct{}
 }
 
+// Disposition values accepted by Defaults.UnknownTool and
+// Defaults.UnknownMethod.
 const (
 	DispositionAllow      = "allow"
 	DispositionDeny       = "deny"
 	DispositionLogAndPass = "log_and_pass"
 )
 
+// LoadBundle reads a YAML file from disk and returns a compiled Bundle.
+// Regex patterns are compiled at load time; an invalid pattern fails with a
+// clear error pointing at the tool, argument, and offending pattern.
 func LoadBundle(path string) (*Bundle, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -49,6 +67,9 @@ func LoadBundle(path string) (*Bundle, error) {
 	return ParseBundle(raw)
 }
 
+// ParseBundle deserializes a YAML document into a compiled Bundle. Useful
+// when the bundle source is not a file on disk (e.g. config-map mount,
+// embedded testdata).
 func ParseBundle(raw []byte) (*Bundle, error) {
 	var b Bundle
 	if err := yaml.Unmarshal(raw, &b); err != nil {

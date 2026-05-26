@@ -7,16 +7,25 @@ import (
 	"github.com/Builder106/halberd/internal/jsonrpc"
 )
 
+// Engine is the per-process policy evaluator. Engines are immutable after
+// construction and safe for concurrent use across goroutines.
 type Engine struct {
 	bundle *Bundle
 }
 
+// New returns an Engine bound to b. The Bundle should already have been
+// compiled by ParseBundle or LoadBundle; New does no further validation.
 func New(b *Bundle) *Engine {
 	return &Engine{bundle: b}
 }
 
+// Server returns the bundle's `server:` identifier, for use in audit logs.
 func (e *Engine) Server() string { return e.bundle.Server }
 
+// EvaluateRequest decides whether the JSON-RPC payload should be forwarded
+// to the upstream MCP server. Returns a Decision with Blocked=false and no
+// Violations on the happy path; the hot-path allocator profile in
+// engine_test.go's benchmarks tracks this case explicitly.
 func (e *Engine) EvaluateRequest(payload []byte) Decision {
 	var env jsonrpc.Request
 	if err := json.Unmarshal(payload, &env); err != nil {

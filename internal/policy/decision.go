@@ -2,11 +2,17 @@ package policy
 
 import "fmt"
 
+// Decision is the policy engine's verdict on one JSON-RPC payload. Blocked
+// is true when at least one Violation matched; the caller is expected to
+// short-circuit the proxy chain and synthesize a JSON-RPC error.
 type Decision struct {
 	Blocked    bool
 	Violations []Violation
 }
 
+// Violation is one matched rule. Several may accumulate on a single payload
+// (e.g. a value that's both too long and matches a deny_pattern); all are
+// returned so the audit log captures the full picture.
 type Violation struct {
 	Category string
 	Tool     string
@@ -25,6 +31,8 @@ func (v Violation) String() string {
 	return fmt.Sprintf("[%s] rule=%q: %s", v.Category, v.Rule, v.Detail)
 }
 
+// Threat-category identifiers used in Violation.Category. The T-prefixed
+// codes match the taxonomy in docs/threat-model.md.
 const (
 	CategoryArgInjection    = "T2_arg_injection"
 	CategoryOutOfScope      = "T3_out_of_scope"

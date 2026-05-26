@@ -21,6 +21,11 @@ import (
 
 const maxRequestBytes = 4 << 20 // 4 MiB ceiling on JSON-RPC envelope
 
+// NewHandler returns an http.Handler that reverse-proxies JSON-RPC requests
+// to target, gating each POST on engine.EvaluateRequest. Decisions are
+// pushed to bus regardless of outcome. The underlying httputil.ReverseProxy
+// flushes on every write (FlushInterval=-1) so SSE streamed responses from
+// the upstream MCP server reach the agent without buffering.
 func NewHandler(target *url.URL, engine *policy.Engine, bus *audit.Bus) http.Handler {
 	proxy := httputil.NewSingleHostReverseProxy(target)
 
