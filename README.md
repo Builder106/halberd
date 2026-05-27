@@ -26,6 +26,43 @@ Every challenge resolves to one of three verdicts, pressed in wax by the sentry:
 
 ![The three verdicts: refused (red wax, crossed halberds), pass granted (brass, halberd silhouette), and amended (blue ink, quill nib)](assets/wax-seals.png)
 
+### Demo recordings
+
+The clusters below are recorded against the live site by the
+[Gherkin demo suite](web/e2e/demo/). Each scenario reads as the threat
+it covers. Re-record locally with `cd web && npm run demo`.
+
+<details>
+<summary><strong>⚔ Refused</strong> — the sentry blocks inbound attacks (T2)</summary>
+
+A `DROP TABLE` under the postgres bundle:
+
+![Halberd refusing a DROP TABLE under the mcp-server-postgres bundle: the sentry presses a red wax seal and surfaces the deny_pattern violation](assets/demo/refused-drop-table.gif)
+
+A path-traversal `read_file` under the filesystem bundle:
+
+![Halberd refusing a ../../etc/shadow read under the mcp-server-filesystem bundle: red wax seal with the path-traversal deny_pattern detail](assets/demo/refused-path-traversal.gif)
+
+</details>
+
+<details>
+<summary><strong>✎ Amended</strong> — the auditor strikes secrets from responses (T1 + T5)</summary>
+
+A `list_users` response carrying fake AWS / GitHub / RSA secrets, amended before the agent sees it:
+
+![Halberd amending a response containing fake AWS, GitHub, and RSA secrets under the honeypot bundle: blue ink seal with three struck detections, rewritten payload shows [REDACTED]](assets/demo/amended-aws-github-rsa-laden-response.gif)
+
+</details>
+
+<details>
+<summary><strong>⛨ Pass granted</strong> — safe envelopes reach the upstream</summary>
+
+A safe `SELECT` under the postgres bundle — the brass seal shows the affirmative case (Halberd is a firewall, not a wall):
+
+![Halberd granting a SELECT id, name FROM students LIMIT 10 under the mcp-server-postgres bundle: brass seal, forwarded to upstream unchanged](assets/demo/granted-safe-select.gif)
+
+</details>
+
 > *`mcp-scan` checks what tools **say** they do. Halberd checks what they
 > **actually try** in production.*
 

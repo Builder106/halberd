@@ -4,6 +4,56 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — Gherkin demo suite + 4 scenario GIFs in the README #milestone #decision
+
+Halberd now has the full demo-recording pipeline the global CLAUDE.md
+baseline calls for: playwright-bdd against the live site, one
+`.feature` per journey cluster, a custom reporter that converts
+webm → mp4 → palette-aware GIF and skips warmups + 0-byte tests.
+Four GIFs landed in `assets/demo/` and are embedded in the README
+under collapsed `<details>` clusters:
+
+- **Refused** — DROP TABLE under postgres, path traversal under filesystem
+- **Amended** — AWS / GitHub / RSA-laden response under the honeypot
+- **Pass granted** — safe SELECT under postgres
+
+Decisions worth recording:
+
+- **Plain Playwright was wrong; Gherkin is right for this repo.** I
+  initially started a plain `@playwright/test` setup arguing BDD
+  boilerplate wasn't worth it for four scenarios. Course-corrected:
+  for a public security repo the `.feature` files *are* the
+  threat-coverage documentation — scannable by anyone, not just
+  TypeScript readers. The boilerplate buys contributor readability,
+  not execution model. Lesson: don't optimize past spec compliance
+  without checking the spec's *reason*.
+- **`@slug=…` Gherkin tags** map scenarios to stable GIF filenames.
+  Without them, the reporter's default slug would be the verbose
+  feature-plus-scenario path; with them, `README.md` can reference
+  `refused-drop-table.gif` and re-runs land at the same path.
+- **Two warmups was the floor; three is safer.** One run still hit
+  the 0-byte first-test bug on slot 3 even with two warmups. The
+  reporter's defensive `statSync(path).size === 0` check catches the
+  spillover and discards instead of shipping a broken GIF. Worth
+  remembering: warmup count is best-effort, not a guarantee.
+- **`test.afterEach` at module load breaks playwright-bdd's loader.**
+  bddgen loads step files outside the test runtime, so a top-level
+  `test.afterEach` in `fixtures.ts` throws on import. Moved the
+  tail-frame hold to a BDD `After` hook in its own
+  `hooks.steps.ts` file.
+- **Reporter defers everything to `onEnd`.** `onTestEnd` fires
+  before Playwright flushes the video file to disk; only by `onEnd`
+  is every webm guaranteed to be written. Same lesson the global
+  CLAUDE.md spec spells out, learned in practice.
+
+Total README media inventory now:
+- Banner SVG (existing)
+- Mermaid sequence diagram (existing)
+- Playground hero screenshot (Phase 1)
+- Wax-seal triptych (Phase 1)
+- Honeypot terminal cast GIF (Phase 1, asciinema → agg)
+- 4 Gherkin demo GIFs (Phase 2, this entry)
+
 ## 2026-05-26 — Canonical site URL moved to halberd-keep.vercel.app #milestone
 
 Vercel auto-allocated `halberd-six.vercel.app` when the project was
