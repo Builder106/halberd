@@ -63,9 +63,11 @@ class DemoReporter implements Reporter {
         const mp4 = join(this.outDir, `${slug}.mp4`);
         // CRF 23 is visually transparent at this resolution; -tune
         // stillimage biases the encoder for the long-still-frame
-        // segments common in slowMo'd UI demos. faststart moves moov
-        // atom up so GitHub starts playback before download
-        // completes.
+        // segments common in slowMo'd UI demos. faststart moves the
+        // moov atom up so GitHub starts playback before download
+        // completes. mp4 stays in the repo as a high-quality
+        // download even though README embeds use GIF (see comment
+        // on the GIF block below).
         this.runFfmpeg([
           "-y",
           "-i",
@@ -87,6 +89,37 @@ class DemoReporter implements Reporter {
         ]);
         rmSync(webm);
         console.log(`[demo] wrote ${mp4}`);
+
+        // README embeds use GIF because GitHub's markdown renderer
+        // strips <video> tags (that pattern only works for video
+        // files uploaded via drag-and-drop into issue/PR comments,
+        // not for repo-committed files). 1280px width and fps 12
+        // keeps the GIF readable for the playground UI while
+        // landing under ~5 MB per clip. 192-color palette with
+        // sierra2_4a dither preserves the brass / wax-red / blue-
+        // ink hues without obvious banding.
+        const gif = join(this.outDir, `${slug}.gif`);
+        const palette = join(this.outDir, `_${slug}.palette.png`);
+        this.runFfmpeg([
+          "-y",
+          "-i",
+          mp4,
+          "-vf",
+          "fps=12,scale=1280:-1:flags=lanczos,palettegen=max_colors=192",
+          palette,
+        ]);
+        this.runFfmpeg([
+          "-y",
+          "-i",
+          mp4,
+          "-i",
+          palette,
+          "-lavfi",
+          "fps=12,scale=1280:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=sierra2_4a",
+          gif,
+        ]);
+        rmSync(palette);
+        console.log(`[demo] wrote ${gif}`);
       } catch (err) {
         console.error(`[demo] ffmpeg failed for ${slug}:`, err);
       }

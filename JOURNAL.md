@@ -4,6 +4,40 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — README demos back to GIF (1280px), mp4 kept as side-by-side download #incident #decision
+
+The mp4 + `<video>` swap was wrong: GitHub's markdown renderer
+strips `<video>` tags entirely outside of issue/PR comment context.
+The previous commit shipped a README with non-playing video frames
+and dropdowns that, when expanded, showed nothing. (Tested
+end-to-end on the live README; user caught it within minutes.)
+
+What actually works on GitHub README:
+- `![alt](path/to/file.gif)` — GIFs render and autoplay.
+- `<video src="...">` — silently stripped by the sanitizer.
+- `https://github.com/<owner>/<repo>/raw/...` URLs are fine for
+  images but not honored as `<video>` sources.
+- Drag-and-drop video into an issue/PR comment yields a
+  `user-attachments/assets/...` URL that DOES work inside a
+  `<video>` tag — but that's only available for user-attached
+  uploads, not repo-committed files.
+
+Course-corrected: kept the mp4 generation in the reporter (for
+high-quality downloads), added a GIF generation pass at 1280px
+(up from 960px in the original first pass — fixes the user's
+resolution complaint) with a 192-color palette and sierra2_4a
+dither. README now uses `![…](…)` image syntax for autoplay
+inline; each clip's `<sub>` link offers the mp4 alongside for
+people who want pixel-perfect quality.
+
+File sizes per clip:
+- mp4 (1440×900, libx264 -crf 23 -tune stillimage): ~340–550 KiB
+- GIF (1280px, fps 12, palette 192): ~2.2–5.0 MiB
+
+GIFs are well under GitHub's 10 MiB per-asset attach limit, which
+means the README ships both formats. Total demo-media footprint
+grew but it stays well within reason.
+
 ## 2026-05-26 — README demos switched from GIF to H.264 mp4 #decision
 
 First pass shipped the playground demos as GIFs at 960px wide,

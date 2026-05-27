@@ -30,36 +30,34 @@ Every challenge resolves to one of three verdicts, pressed in wax by the sentry:
 
 A `DROP TABLE` under the postgres bundle, refused with a red wax seal:
 
-<video src="https://github.com/Builder106/Halberd/raw/main/assets/demo/refused-drop-table.mp4" autoplay loop muted playsinline width="100%">
-  Your browser doesn't support inline video. <a href="assets/demo/refused-drop-table.mp4">Download the recording</a>.
-</video>
+![Halberd refusing a DROP TABLE under the mcp-server-postgres bundle: a red wax seal is pressed and the deny_pattern violation is surfaced](assets/demo/refused-drop-table.gif)
 
-<sub>Recorded against the live site by the <a href="web/e2e/demo/">Gherkin demo suite</a>. Re-record locally with <code>cd web && npm run demo</code>.</sub>
+<sub>Recorded against the live site by the <a href="web/e2e/demo/">Gherkin demo suite</a>. Re-record locally with <code>cd web && npm run demo</code>. Higher-quality H.264 mp4 alongside each clip: <a href="assets/demo/refused-drop-table.mp4">refused-drop-table.mp4</a>.</sub>
 
 <details>
 <summary><strong>⚔ Refused</strong> — another scenario from the same cluster: path-traversal blocked under the filesystem bundle</summary>
 
-<video src="https://github.com/Builder106/Halberd/raw/main/assets/demo/refused-path-traversal.mp4" controls preload="metadata" width="100%">
-  Your browser doesn't support inline video. <a href="assets/demo/refused-path-traversal.mp4">Download the recording</a>.
-</video>
+![Halberd refusing a ../../etc/shadow read under the mcp-server-filesystem bundle: red wax seal with the path-traversal deny_pattern detail](assets/demo/refused-path-traversal.gif)
+
+<sub>mp4: <a href="assets/demo/refused-path-traversal.mp4">refused-path-traversal.mp4</a></sub>
 
 </details>
 
 <details>
 <summary><strong>✎ Amended</strong> — the auditor strikes AWS / GitHub / RSA secrets from a response (T1 + T5)</summary>
 
-<video src="https://github.com/Builder106/Halberd/raw/main/assets/demo/amended-aws-github-rsa-laden-response.mp4" controls preload="metadata" width="100%">
-  Your browser doesn't support inline video. <a href="assets/demo/amended-aws-github-rsa-laden-response.mp4">Download the recording</a>.
-</video>
+![Halberd amending a response containing fake AWS, GitHub, and RSA secrets under the honeypot bundle: blue ink seal with three struck detections, rewritten payload shows [REDACTED]](assets/demo/amended-aws-github-rsa-laden-response.gif)
+
+<sub>mp4: <a href="assets/demo/amended-aws-github-rsa-laden-response.mp4">amended-aws-github-rsa-laden-response.mp4</a></sub>
 
 </details>
 
 <details>
 <summary><strong>⛨ Pass granted</strong> — a safe SELECT reaches the upstream unchanged (Halberd is a firewall, not a wall)</summary>
 
-<video src="https://github.com/Builder106/Halberd/raw/main/assets/demo/granted-safe-select.mp4" controls preload="metadata" width="100%">
-  Your browser doesn't support inline video. <a href="assets/demo/granted-safe-select.mp4">Download the recording</a>.
-</video>
+![Halberd granting a SELECT id, name FROM students LIMIT 10 under the mcp-server-postgres bundle: brass seal, forwarded to upstream unchanged](assets/demo/granted-safe-select.gif)
+
+<sub>mp4: <a href="assets/demo/granted-safe-select.mp4">granted-safe-select.mp4</a></sub>
 
 </details>
 
@@ -166,11 +164,9 @@ for the full threat-coverage table.
 <details>
 <summary><strong>▶ Watch it run</strong> — 30s terminal cast: DROP TABLE refused, secrets redacted, audit log captured</summary>
 
-<video src="https://github.com/Builder106/Halberd/raw/main/assets/honeypot-demo.mp4" controls preload="metadata" width="100%">
-  Your browser doesn't support inline video. <a href="assets/honeypot-demo.mp4">Download the recording</a>.
-</video>
+![Halberd wrapping the honeypot: a DROP TABLE request is blocked with -32000, a list_users response has its embedded AWS/GitHub/RSA secrets redacted, and the audit log captures both decisions](assets/honeypot-demo.gif)
 
-The cast is scripted under [`scripts/demo/honeypot-demo.sh`](scripts/demo/honeypot-demo.sh) and re-recorded via `asciinema rec --command ./scripts/demo/honeypot-demo.sh assets/honeypot-demo.cast` + `agg --theme github-dark` + `ffmpeg`.
+<sub>The cast is scripted under <a href="scripts/demo/honeypot-demo.sh">scripts/demo/honeypot-demo.sh</a> and re-recorded via <code>asciinema rec --command ./scripts/demo/honeypot-demo.sh assets/honeypot-demo.cast</code> + <code>agg --theme github-dark</code>. mp4: <a href="assets/honeypot-demo.mp4">honeypot-demo.mp4</a></sub>
 
 </details>
 
