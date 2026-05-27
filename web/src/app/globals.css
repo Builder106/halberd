@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0e14;
+  --color-bg-2: #10161e;
+  --color-panel: #131a23;
+  --color-grid: #1c2530;
+  --color-border: #2a3543;
+
+  --color-fg: #f0f4f8;
+  --color-fg-2: #9aabbe;
+  --color-fg-3: #5e6e80;
+
+  --color-accent: #7c4dff;
+  --color-accent-2: #00d4ff;
+  --color-danger: #ff5478;
+  --color-success: #00d48b;
+  --color-warning: #ffb547;
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
+    system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+}
+
+/* Subtle 40px grid that the hero + footer can show through */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, var(--color-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Selection: pick the brand accent so highlighted code reads on-brand */
+::selection {
+  background: rgba(124, 77, 255, 0.35);
+  color: var(--color-fg);
+}
+
+/* Inline <code>: rendered like in the banner */
+:where(p, li, td) > code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  color: var(--color-fg);
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+}

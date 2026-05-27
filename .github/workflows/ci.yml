@@ -101,3 +101,38 @@ jobs:
       - uses: golangci/golangci-lint-action@v7
         with:
           version: v2.12.2
+
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+
+      - name: Rebuild WASM and verify committed artifacts are fresh
+        run: |
+          ./scripts/build-wasm.sh
+          # If the committed wasm drifts from a fresh build, fail loudly —
+          # otherwise the playground ships stale rules silently.
+          git diff --exit-code -- web/public/halberd.wasm web/public/wasm_exec.js
+
+      - name: npm install
+        working-directory: web
+        run: npm ci
+
+      - name: next build
+        working-directory: web
+        run: npx next build
+
+      - name: next lint
+        working-directory: web
+        run: npx next lint || true   # warnings, not blockers, for v0.1
