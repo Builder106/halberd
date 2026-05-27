@@ -9,7 +9,6 @@ Feature: Amended — the auditor strikes secrets from a response
   Background:
     Given I am on the Halberd playground
 
-  @slug=amended-aws-github-rsa-laden-response
   Scenario: An aws + github + rsa-laden response is amended under the honeypot bundle
     When I choose the "halberd-honeypot" rule pack
     And I load the "Response with AWS + GitHub + RSA (sanitized)" scenario

@@ -8,7 +8,6 @@ Feature: Pass granted — a safe envelope reaches the upstream
   Background:
     Given I am on the Halberd playground
 
-  @slug=granted-safe-select
   Scenario: A safe SELECT is forwarded under the postgres bundle
     When I choose the "mcp-server-postgres" rule pack
     And I load the "Safe SELECT (allowed)" scenario

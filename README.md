@@ -26,40 +26,40 @@ Every challenge resolves to one of three verdicts, pressed in wax by the sentry:
 
 ![The three verdicts: refused (red wax, crossed halberds), pass granted (brass, halberd silhouette), and amended (blue ink, quill nib)](assets/wax-seals.png)
 
-### Demo recordings
+### See it in motion
 
-The clusters below are recorded against the live site by the
-[Gherkin demo suite](web/e2e/demo/). Each scenario reads as the threat
-it covers. Re-record locally with `cd web && npm run demo`.
+A `DROP TABLE` under the postgres bundle, refused with a red wax seal:
+
+<video src="https://github.com/Builder106/Halberd/raw/main/assets/demo/refused-drop-table.mp4" autoplay loop muted playsinline width="100%">
+  Your browser doesn't support inline video. <a href="assets/demo/refused-drop-table.mp4">Download the recording</a>.
+</video>
+
+<sub>Recorded against the live site by the <a href="web/e2e/demo/">Gherkin demo suite</a>. Re-record locally with <code>cd web && npm run demo</code>.</sub>
 
 <details>
-<summary><strong>⚔ Refused</strong> — the sentry blocks inbound attacks (T2)</summary>
+<summary><strong>⚔ Refused</strong> — another scenario from the same cluster: path-traversal blocked under the filesystem bundle</summary>
 
-A `DROP TABLE` under the postgres bundle:
-
-![Halberd refusing a DROP TABLE under the mcp-server-postgres bundle: the sentry presses a red wax seal and surfaces the deny_pattern violation](assets/demo/refused-drop-table.gif)
-
-A path-traversal `read_file` under the filesystem bundle:
-
-![Halberd refusing a ../../etc/shadow read under the mcp-server-filesystem bundle: red wax seal with the path-traversal deny_pattern detail](assets/demo/refused-path-traversal.gif)
+<video src="https://github.com/Builder106/Halberd/raw/main/assets/demo/refused-path-traversal.mp4" controls preload="metadata" width="100%">
+  Your browser doesn't support inline video. <a href="assets/demo/refused-path-traversal.mp4">Download the recording</a>.
+</video>
 
 </details>
 
 <details>
-<summary><strong>✎ Amended</strong> — the auditor strikes secrets from responses (T1 + T5)</summary>
+<summary><strong>✎ Amended</strong> — the auditor strikes AWS / GitHub / RSA secrets from a response (T1 + T5)</summary>
 
-A `list_users` response carrying fake AWS / GitHub / RSA secrets, amended before the agent sees it:
-
-![Halberd amending a response containing fake AWS, GitHub, and RSA secrets under the honeypot bundle: blue ink seal with three struck detections, rewritten payload shows [REDACTED]](assets/demo/amended-aws-github-rsa-laden-response.gif)
+<video src="https://github.com/Builder106/Halberd/raw/main/assets/demo/amended-aws-github-rsa-laden-response.mp4" controls preload="metadata" width="100%">
+  Your browser doesn't support inline video. <a href="assets/demo/amended-aws-github-rsa-laden-response.mp4">Download the recording</a>.
+</video>
 
 </details>
 
 <details>
-<summary><strong>⛨ Pass granted</strong> — safe envelopes reach the upstream</summary>
+<summary><strong>⛨ Pass granted</strong> — a safe SELECT reaches the upstream unchanged (Halberd is a firewall, not a wall)</summary>
 
-A safe `SELECT` under the postgres bundle — the brass seal shows the affirmative case (Halberd is a firewall, not a wall):
-
-![Halberd granting a SELECT id, name FROM students LIMIT 10 under the mcp-server-postgres bundle: brass seal, forwarded to upstream unchanged](assets/demo/granted-safe-select.gif)
+<video src="https://github.com/Builder106/Halberd/raw/main/assets/demo/granted-safe-select.mp4" controls preload="metadata" width="100%">
+  Your browser doesn't support inline video. <a href="assets/demo/granted-safe-select.mp4">Download the recording</a>.
+</video>
 
 </details>
 
@@ -166,9 +166,11 @@ for the full threat-coverage table.
 <details>
 <summary><strong>▶ Watch it run</strong> — 30s terminal cast: DROP TABLE refused, secrets redacted, audit log captured</summary>
 
-![Halberd wrapping the honeypot: a DROP TABLE request is blocked with -32000, a list_users response has its embedded AWS/GitHub/RSA secrets redacted, and the audit log captures both decisions](assets/honeypot-demo.gif)
+<video src="https://github.com/Builder106/Halberd/raw/main/assets/honeypot-demo.mp4" controls preload="metadata" width="100%">
+  Your browser doesn't support inline video. <a href="assets/honeypot-demo.mp4">Download the recording</a>.
+</video>
 
-The cast is scripted under [`scripts/demo/honeypot-demo.sh`](scripts/demo/honeypot-demo.sh) and re-recorded via `asciinema rec --command ./scripts/demo/honeypot-demo.sh assets/honeypot-demo.cast` + `agg --theme github-dark`.
+The cast is scripted under [`scripts/demo/honeypot-demo.sh`](scripts/demo/honeypot-demo.sh) and re-recorded via `asciinema rec --command ./scripts/demo/honeypot-demo.sh assets/honeypot-demo.cast` + `agg --theme github-dark` + `ffmpeg`.
 
 </details>
 

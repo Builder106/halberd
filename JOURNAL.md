@@ -4,6 +4,44 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — README demos switched from GIF to H.264 mp4 #decision
+
+First pass shipped the playground demos as GIFs at 960px wide,
+~2.2-2.6 MiB each, all gated behind `<details>` dropdowns. Visual
+review immediately surfaced two problems: GIFs at 960px made the
+playground text fuzzy at 1× display, and putting every demo behind
+a click meant first-time visitors saw zero motion before scrolling
+past the demo section. Switched both moves:
+
+- **GIF → mp4 (H.264 stillimage tune).** The reporter was already
+  producing mp4 as the intermediate before palette-converting to
+  GIF; now it stops at mp4 and the GIF step is gone. Crisp 1440×900
+  output at ~500 KiB per clip — *smaller* than the lower-res GIFs
+  and dramatically sharper because H.264 compresses screen
+  recordings with text antialiasing far better than GIF's 256-colour
+  palette ever could. Source-of-truth `.cast` for the terminal demo
+  re-encoded the same way (187 KiB GIF → 171 KiB mp4).
+- **One hero demo inline, alternates in `<details>`.** The Refused
+  / DROP TABLE clip is the strongest single artefact, so it
+  autoplays muted-and-looped right under the wax-seal triptych. The
+  other three (path-traversal refusal, response amendment, safe
+  SELECT) stay in `<details>` with `preload="metadata"` and
+  `controls` so they don't ship bytes until expanded.
+
+Two implementation footguns worth recording:
+
+- **playwright-bdd drops `=`-bearing Gherkin tags.** Tried
+  `@slug=refused-drop-table` for stable filename mapping; the
+  generated test files never saw the tags. Switched to a scenario-
+  title → slug lookup table in the reporter (uglier but
+  bulletproof). Note for future BDD work: tag values via `=` are
+  not portable across BDD libraries.
+- **GitHub README `<video src>` needs the raw URL, not a relative
+  path.** GitHub serves images at relative paths through camo but
+  refuses to do the same for video; the workaround is to point
+  src at `https://github.com/<owner>/<repo>/raw/main/<path>`.
+  Documented as a footnote in the README itself.
+
 ## 2026-05-26 — Gherkin demo suite + 4 scenario GIFs in the README #milestone #decision
 
 Halberd now has the full demo-recording pipeline the global CLAUDE.md

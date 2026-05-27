@@ -7,7 +7,6 @@ Feature: Refused — the sentry blocks an inbound attack
   Background:
     Given I am on the Halberd playground
 
-  @slug=refused-drop-table
   Scenario: A DROP TABLE is refused under the postgres bundle
     When I choose the "mcp-server-postgres" rule pack
     And I load the "DROP TABLE (blocked)" scenario
@@ -15,7 +14,6 @@ Feature: Refused — the sentry blocks an inbound attack
     Then the verdict reads "Refused"
     And a deny_pattern violation is recorded on the sql field
 
-  @slug=refused-path-traversal
   Scenario: A path-traversal read is refused under the filesystem bundle
     When I choose the "mcp-server-filesystem" rule pack
     And I load the "Path traversal (blocked)" scenario

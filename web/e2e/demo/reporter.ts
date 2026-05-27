@@ -61,6 +61,11 @@ class DemoReporter implements Reporter {
 
       try {
         const mp4 = join(this.outDir, `${slug}.mp4`);
+        // CRF 23 is visually transparent at this resolution; -tune
+        // stillimage biases the encoder for the long-still-frame
+        // segments common in slowMo'd UI demos. faststart moves moov
+        // atom up so GitHub starts playback before download
+        // completes.
         this.runFfmpeg([
           "-y",
           "-i",
@@ -68,40 +73,20 @@ class DemoReporter implements Reporter {
           "-c:v",
           "libx264",
           "-preset",
-          "veryfast",
+          "slow",
+          "-tune",
+          "stillimage",
+          "-crf",
+          "23",
           "-pix_fmt",
           "yuv420p",
           "-movflags",
           "+faststart",
+          "-an",
           mp4,
         ]);
         rmSync(webm);
-
-        const gif = join(this.outDir, `${slug}.gif`);
-        // Build a palette first for cleaner colour rendering; keep
-        // the GIF small (fps 12, width 960) so each embeds well under
-        // GitHub's 10 MB attach limit.
-        const palette = join(this.outDir, `_${slug}.palette.png`);
-        this.runFfmpeg([
-          "-y",
-          "-i",
-          mp4,
-          "-vf",
-          "fps=12,scale=960:-1:flags=lanczos,palettegen=max_colors=128",
-          palette,
-        ]);
-        this.runFfmpeg([
-          "-y",
-          "-i",
-          mp4,
-          "-i",
-          palette,
-          "-lavfi",
-          "fps=12,scale=960:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=sierra2_4a",
-          gif,
-        ]);
-        rmSync(palette);
-        console.log(`[demo] wrote ${gif}`);
+        console.log(`[demo] wrote ${mp4}`);
       } catch (err) {
         console.error(`[demo] ffmpeg failed for ${slug}:`, err);
       }
@@ -129,14 +114,31 @@ class DemoReporter implements Reporter {
     }
   }
 
-  private slugify(test: TestCase): string {
-    // Prefer an explicit `@slug=<name>` Gherkin tag so the README
-    // links to a stable filename across re-runs. Fall back to the
-    // feature+scenario titles for tests that don't carry the tag
-    // (notably the warmups, which the reporter discards anyway).
-    const tagged = test.tags.find((t) => t.startsWith("@slug="));
-    if (tagged) return tagged.slice("@slug=".length);
+  // Explicit scenario-title → README-stable slug. The keys must match
+  // the Scenario lines in .feature files exactly. README image refs
+  // are written against these slugs, so re-running the demo suite
+  // overwrites the same filenames rather than producing new ones.
+  //
+  // (Was tried via `@slug=foo` Gherkin tags first; playwright-bdd
+  // drops `=`-bearing tags during its parse step, so they never reach
+  // TestCase.tags. The lookup table is uglier but bulletproof.)
+  private slugForScenario: Record<string, string> = {
+    "A DROP TABLE is refused under the postgres bundle":
+      "refused-drop-table",
+    "A path-traversal read is refused under the filesystem bundle":
+      "refused-path-traversal",
+    "An aws + github + rsa-laden response is amended under the honeypot bundle":
+      "amended-aws-github-rsa-laden-response",
+    "A safe SELECT is forwarded under the postgres bundle":
+      "granted-safe-select",
+  };
 
+  private slugify(test: TestCase): string {
+    const explicit = this.slugForScenario[test.title];
+    if (explicit) return explicit;
+
+    // Fall back for warmups (which the reporter discards anyway) and
+    // for any scenarios added without a table entry.
     const parts = test.titlePath().filter(Boolean);
     const last2 = parts.slice(-2).join(" ");
     return last2
