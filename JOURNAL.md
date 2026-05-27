@@ -4,6 +4,50 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — Deployed playground site at halberd-six.vercel.app #milestone
+
+Halberd now has a live homepage at
+[halberd-six.vercel.app](https://halberd-six.vercel.app) — a Next.js 16
+app with a hero, an interactive playground, a threat-model summary, and
+install instructions. The playground runs the actual `internal/policy`
+engine compiled to WebAssembly (via a new `cmd/halberd-wasm` package
+that uses `syscall/js`), so decisions in the browser match what the
+binaries do byte-for-byte. Five rule packs preloaded with preset
+attacks: DROP TABLE, path traversal, --upload-pack ref smuggling,
+org-allowlist misses, secret-laden responses.
+
+Decisions worth recording:
+
+- **WASM commits to git, not built on Vercel.** Vercel's build env is
+  Node-first; bootstrapping Go in the build command is fragile.
+  Committing the 4.6 MiB `web/public/halberd.wasm` (compresses to
+  ~1.4 MiB over the wire with Vercel's brotli) is the pragmatic
+  trade-off. CI's `web` job rebuilds the WASM on every push and fails
+  loudly if the committed artifact drifts from a fresh build — so the
+  playground can't quietly ship stale rules.
+- **`//go:embed` forbids `..` paths.** The rule packs live at the repo
+  root in `policies/`, but `cmd/halberd-wasm/main.go` needs to embed
+  them. `scripts/build-wasm.sh` stages a copy into
+  `cmd/halberd-wasm/policies/` (gitignored) before building. Cleaner
+  than restructuring the repo around the WASM build.
+- **pnpm 11's build-script approval blocks scaffolding.** `create-next-app`
+  scaffolds with pnpm by default; pnpm 11 then refuses `sharp` and
+  `unrs-resolver` build scripts without explicit `onlyBuiltDependencies`
+  approval — the old `pnpm` field in `package.json` is deprecated and
+  the workspace-yaml location only works inside a workspace root.
+  Switched to npm; `package-lock.json` checked in. v0.1 doesn't need
+  pnpm's perf wins.
+- **Vercel auto-generated alias is `halberd-six.vercel.app`.** Plain
+  `halberd.vercel.app` was taken on the platform, so the project gets
+  `halberd-six` as its default alias. Three stable aliases land
+  automatically: `halberd-six`, `halberd-sankofa-forge`, and
+  `halberd-builder106-sankofa-forge`. Documenting the canonical one in
+  the README and `metadataBase`; can swap to a custom domain later
+  without code changes elsewhere.
+
+Repo metadata updated: homepage URL set to the live site, README banner
+gets a `demo - live` badge.
+
 ## 2026-05-26 — Filed upstream API feature request; community/community gates API-created discussions #milestone #incident
 
 Halberd's goreleaser pipeline can do everything except set the GitHub
