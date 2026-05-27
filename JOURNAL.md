@@ -4,6 +4,29 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-27 — @vercel/analytics + @vercel/speed-insights wired in #milestone
+
+Both packages installed into `web/` and mounted as client components
+in the root layout. Build clean, deploy green (`c33c02c`).
+
+State as of this commit:
+
+- **Speed Insights**: fully live. `/_vercel/speed-insights/script.js`
+  serves; the SpeedInsights component fires Web Vitals beacons on
+  every visit. Dashboard at `vercel.com/sankofa-forge/halberd/speed-
+  insights` will populate as traffic arrives.
+- **Web Analytics**: code wired, receiving endpoint still 404s. The
+  project record has `webAnalytics.id` populated but on the Hobby
+  plan the `/_vercel/insights/script.js` endpoint only flips live
+  after a manual "Enable Web Analytics" click in the dashboard.
+  The API endpoint for programmatic enable
+  (`POST /v1/web/insights/projects/{id}/enable`) returns 404 on
+  Hobby — only paid plans get programmatic activation.
+
+To finish the install: visit
+[vercel.com/sankofa-forge/halberd/analytics](https://vercel.com/sankofa-forge/halberd/analytics)
+and click *Enable Web Analytics*. One-time, no code change needed.
+
 ## 2026-05-27 — Vercel git-trigger deploys were failing silently for 11h #incident
 
 Every git push since `010f1f0` (~11 hours ago) was triggering a
