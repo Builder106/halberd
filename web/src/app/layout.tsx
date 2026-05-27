@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 // Display serif used only for the ceremonial section headers ("II. THE
@@ -74,7 +76,15 @@ export default function RootLayout({
       lang="en"
       className={`h-full antialiased dark ${cormorant.variable}`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* Privacy-friendly page-view + Web Vitals telemetry. No
+            cookies, no fingerprinting; surfaces in the Vercel
+            dashboard under the project's Analytics / Speed Insights
+            tabs. Both components no-op outside production. */}
+        <Analytics />
+        <SpeedInsights />
+      </body>
     </html>
   );
 }
