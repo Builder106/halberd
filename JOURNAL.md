@@ -4,6 +4,47 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-27 — Vercel git-trigger deploys were failing silently for 11h #incident
+
+Every git push since `010f1f0` (~11 hours ago) was triggering a
+Vercel deploy that errored out in 4-6s with: `Couldn't find any
+pages or app directory. Please create one under the project root`.
+The live site stayed up only because none of those errored deploys
+got promoted, so the prior CLI-issued deploy stuck as production.
+Caught when I checked the Vercel dashboard — the deploys list was
+a column of red.
+
+Root cause: when I ran `vercel link --project halberd` and
+`vercel deploy --prod` from `web/`, the CLI link wrote
+`.vercel/project.json` pointing at the right project but the
+**project's `rootDirectory` setting on Vercel's side stayed at
+the repo root**. The GitHub integration (which Vercel set up when
+the project was created) honors that server-side setting, not the
+local `.vercel/project.json`. So:
+
+- CLI deploys from `web/` → succeed (build runs in `web/`)
+- Git push → fail (build runs in repo root, no Next.js there)
+
+Fixed via the v9 projects API:
+
+```bash
+curl -X PATCH "https://api.vercel.com/v9/projects/$PROJECT_ID?teamId=$TEAM_ID" \
+  -H "Authorization: Bearer $(jq -r .token ~/.../com.vercel.cli/auth.json)" \
+  -H "Content-Type: application/json" \
+  -d '{"rootDirectory":"web"}'
+```
+
+Next deploy went green in 37s. Two lessons:
+
+1. **CLI `vercel link` only configures the local CLI**, not the
+   git integration's build settings. For a Next.js app in a
+   subdirectory of a repo, `rootDirectory` must be set
+   server-side too.
+2. **Watch the Vercel deployments tab, not just halberd-keep**.
+   The alias keeps serving the last-good deploy even when 11
+   hours of pushes have been failing — there's no visible signal
+   on the live site that anything is wrong.
+
 ## 2026-05-26 — README demos back to GIF (1280px), mp4 kept as side-by-side download #incident #decision
 
 The mp4 + `<video>` swap was wrong: GitHub's markdown renderer
