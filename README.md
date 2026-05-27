@@ -18,6 +18,14 @@ reaches the host system.
 
 > **Try it in the browser:** [halberd-keep.vercel.app](https://halberd-keep.vercel.app) — the real `internal/policy` engine compiled to WebAssembly. Pick a rule pack, paste a `tools/call`, see the decision.
 
+<a href="https://halberd-keep.vercel.app">
+  <img src="assets/playground-hero.png" alt="Halberd's playground showing a DROP TABLE request blocked with a red wax-seal verdict and the violation detail" width="100%">
+</a>
+
+Every challenge resolves to one of three verdicts, pressed in wax by the sentry:
+
+![The three verdicts: refused (red wax, crossed halberds), pass granted (brass, halberd silhouette), and amended (blue ink, quill nib)](assets/wax-seals.png)
+
 > *`mcp-scan` checks what tools **say** they do. Halberd checks what they
 > **actually try** in production.*
 
@@ -117,6 +125,15 @@ with `../../etc/passwd`, or `list_users` (the response carries fake
 AWS / GitHub / RSA secrets) — and watch Halberd block, redact, and audit
 each one. See [`cmd/halberd-honeypot/README.md`](cmd/halberd-honeypot/README.md)
 for the full threat-coverage table.
+
+<details>
+<summary><strong>▶ Watch it run</strong> — 30s terminal cast: DROP TABLE refused, secrets redacted, audit log captured</summary>
+
+![Halberd wrapping the honeypot: a DROP TABLE request is blocked with -32000, a list_users response has its embedded AWS/GitHub/RSA secrets redacted, and the audit log captures both decisions](assets/honeypot-demo.gif)
+
+The cast is scripted under [`scripts/demo/honeypot-demo.sh`](scripts/demo/honeypot-demo.sh) and re-recorded via `asciinema rec --command ./scripts/demo/honeypot-demo.sh assets/honeypot-demo.cast` + `agg --theme github-dark`.
+
+</details>
 
 ### Option A — remote MCP server (HTTP transport)
 

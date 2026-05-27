@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 380" width="900" height="380">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0e14"/>
+      <stop offset="100%" stop-color="#10161e"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1c2530" stroke-width="1"/>
+    </pattern>
+
+    <radialGradient id="refused" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0%" stop-color="#d23a44"/>
+      <stop offset="55%" stop-color="#a3252e"/>
+      <stop offset="100%" stop-color="#5a141a"/>
+    </radialGradient>
+    <radialGradient id="granted" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0%" stop-color="#d4a754"/>
+      <stop offset="55%" stop-color="#b08948"/>
+      <stop offset="100%" stop-color="#5d4621"/>
+    </radialGradient>
+    <radialGradient id="amended" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0%" stop-color="#4a6fa8"/>
+      <stop offset="55%" stop-color="#2d4a7c"/>
+      <stop offset="100%" stop-color="#172846"/>
+    </radialGradient>
+
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="380" fill="url(#bg)"/>
+  <rect width="900" height="380" fill="url(#grid)" opacity="0.6"/>
+
+  <text x="450" y="40" text-anchor="middle"
+        font-family="-apple-system, 'SF Pro Display', system-ui, sans-serif"
+        font-size="13" font-weight="500" letter-spacing="3"
+        fill="#5e6e80">THE THREE VERDICTS · PRESSED IN WAX BY THE SENTRY</text>
+
+  <!-- REFUSED -->
+  <g transform="translate(150 190)">
+    <circle cx="3" cy="4" r="56" fill="rgba(0,0,0,0.55)" filter="url(#shadow)"/>
+    <circle cx="0" cy="0" r="56" fill="url(#refused)" stroke="#7a1d23" stroke-width="1.2"/>
+    <!-- subtle bumps to suggest pressed-wax irregularity -->
+    <circle cx="-52" cy="-12" r="6" fill="url(#refused)"/>
+    <circle cx="48" cy="-22" r="5" fill="url(#refused)"/>
+    <circle cx="36" cy="46" r="6" fill="url(#refused)"/>
+    <circle cx="-44" cy="34" r="5" fill="url(#refused)"/>
+    <!-- inner pressed-die rings -->
+    <circle cx="0" cy="0" r="44" fill="none" stroke="#7a1d23" stroke-width="0.8" opacity="0.7"/>
+    <circle cx="0" cy="0" r="38" fill="none" stroke="#7a1d23" stroke-width="0.4" opacity="0.5"/>
+    <!-- motif: crossed halberds -->
+    <g stroke="#f0e6d2" stroke-width="3.5" stroke-linecap="round" fill="none">
+      <line x1="-20" y1="-20" x2="20" y2="20"/>
+      <line x1="20" y1="-20" x2="-20" y2="20"/>
+      <circle cx="0" cy="0" r="3.5" fill="#f0e6d2" stroke="none"/>
+    </g>
+    <text x="0" y="92" text-anchor="middle"
+          font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+          font-size="11" letter-spacing="3" fill="#a3252e" font-weight="600">REFUSED</text>
+    <text x="0" y="110" text-anchor="middle"
+          font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+          font-size="9" letter-spacing="2.2" fill="#5e6e80">BY ORDER OF THE POLICY</text>
+    <text x="0" y="140" text-anchor="middle"
+          font-family="-apple-system, 'SF Pro Text', system-ui, sans-serif"
+          font-size="12" fill="#9aabbe">request blocked · -32000 returned</text>
+  </g>
+
+  <!-- GRANTED -->
+  <g transform="translate(450 190)">
+    <circle cx="3" cy="4" r="56" fill="rgba(0,0,0,0.55)" filter="url(#shadow)"/>
+    <circle cx="0" cy="0" r="56" fill="url(#granted)" stroke="#8a6a37" stroke-width="1.2"/>
+    <circle cx="-50" cy="-18" r="6" fill="url(#granted)"/>
+    <circle cx="52" cy="-8" r="5" fill="url(#granted)"/>
+    <circle cx="40" cy="42" r="6" fill="url(#granted)"/>
+    <circle cx="-46" cy="38" r="5" fill="url(#granted)"/>
+    <circle cx="0" cy="0" r="44" fill="none" stroke="#8a6a37" stroke-width="0.8" opacity="0.7"/>
+    <circle cx="0" cy="0" r="38" fill="none" stroke="#8a6a37" stroke-width="0.4" opacity="0.5"/>
+    <!-- motif: halberd silhouette -->
+    <g fill="#1a1208" stroke="none" transform="scale(1.1)">
+      <rect x="-1.5" y="-22" width="3" height="44"/>
+      <polygon points="0,-26 -3,-22 3,-22"/>
+      <path d="M -3 -18 Q -16 -14 -19 -4 Q -14 -1 -7 -1 L -3 -3 Z"/>
+      <path d="M 3 -18 Q 12 -14 14 -7 Q 10 -4 5 -4 L 3 -6 Z"/>
+      <rect x="-6" y="-3" width="12" height="3.5"/>
+      <circle cx="0" cy="24" r="2.8"/>
+    </g>
+    <text x="0" y="92" text-anchor="middle"
+          font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+          font-size="11" letter-spacing="3" fill="#b08948" font-weight="600">PASS GRANTED</text>
+    <text x="0" y="110" text-anchor="middle"
+          font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+          font-size="9" letter-spacing="2.2" fill="#5e6e80">ADMITTANCE</text>
+    <text x="0" y="140" text-anchor="middle"
+          font-family="-apple-system, 'SF Pro Text', system-ui, sans-serif"
+          font-size="12" fill="#9aabbe">forwarded to upstream · unchanged</text>
+  </g>
+
+  <!-- AMENDED -->
+  <g transform="translate(750 190)">
+    <circle cx="3" cy="4" r="56" fill="rgba(0,0,0,0.55)" filter="url(#shadow)"/>
+    <circle cx="0" cy="0" r="56" fill="url(#amended)" stroke="#1f3559" stroke-width="1.2"/>
+    <circle cx="-48" cy="-22" r="6" fill="url(#amended)"/>
+    <circle cx="50" cy="-12" r="5" fill="url(#amended)"/>
+    <circle cx="34" cy="48" r="6" fill="url(#amended)"/>
+    <circle cx="-50" cy="32" r="5" fill="url(#amended)"/>
+    <circle cx="0" cy="0" r="44" fill="none" stroke="#1f3559" stroke-width="0.8" opacity="0.7"/>
+    <circle cx="0" cy="0" r="38" fill="none" stroke="#1f3559" stroke-width="0.4" opacity="0.5"/>
+    <!-- motif: quill nib -->
+    <g fill="#f0e6d2" stroke="none">
+      <path d="M -18 16 L 16 -18 L 20 -14 L -14 20 Z"/>
+      <polygon points="16,-18 20,-14 25,-23 18,-25"/>
+      <circle cx="-16" cy="18" r="2.8"/>
+    </g>
+    <text x="0" y="92" text-anchor="middle"
+          font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+          font-size="11" letter-spacing="3" fill="#2d4a7c" font-weight="600">AMENDED</text>
+    <text x="0" y="110" text-anchor="middle"
+          font-family="ui-monospace, 'SF Mono', Menlo, monospace"
+          font-size="9" letter-spacing="2.2" fill="#5e6e80">BY THE AUDITOR&#39;S HAND</text>
+    <text x="0" y="140" text-anchor="middle"
+          font-family="-apple-system, 'SF Pro Text', system-ui, sans-serif"
+          font-size="12" fill="#9aabbe">secrets struck before delivery</text>
+  </g>
+</svg>
