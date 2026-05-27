@@ -11,7 +11,7 @@ const cormorant = Cormorant_Garamond({
   variable: "--font-display-serif",
 });
 
-const siteUrl = "https://halberd-six.vercel.app";
+const siteUrl = "https://halberd-keep.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

@@ -8,7 +8,7 @@
 [![Go](https://img.shields.io/badge/go-1.22%2B-00ADD8.svg)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 [![MCP](https://img.shields.io/badge/MCP-2025--06-7C4DFF.svg)](https://modelcontextprotocol.io)
-[![Demo](https://img.shields.io/badge/demo-live-success.svg)](https://halberd-six.vercel.app)
+[![Demo](https://img.shields.io/badge/demo-live-success.svg)](https://halberd-keep.vercel.app)
 
 **Halberd** is a high-throughput reverse proxy that sits between an LLM agent
 and its Model Context Protocol (MCP) servers. Every `tools/call` envelope is
@@ -16,7 +16,7 @@ parsed, evaluated against a YAML policy bundle, and either forwarded or
 blocked with a synthetic JSON-RPC error — before the malicious payload
 reaches the host system.
 
-> **Try it in the browser:** [halberd-six.vercel.app](https://halberd-six.vercel.app) — the real `internal/policy` engine compiled to WebAssembly. Pick a rule pack, paste a `tools/call`, see the decision.
+> **Try it in the browser:** [halberd-keep.vercel.app](https://halberd-keep.vercel.app) — the real `internal/policy` engine compiled to WebAssembly. Pick a rule pack, paste a `tools/call`, see the decision.
 
 > *`mcp-scan` checks what tools **say** they do. Halberd checks what they
 > **actually try** in production.*

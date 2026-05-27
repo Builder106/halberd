@@ -4,6 +4,23 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — Canonical site URL moved to halberd-keep.vercel.app #milestone
+
+Vercel auto-allocated `halberd-six.vercel.app` when the project was
+first created (their fallback word-list since plain `halberd.vercel.app`
+was claimed elsewhere). Replaced with `halberd-keep.vercel.app`, which
+picks up the keep-tour brand we just shipped. The old URL still
+resolves; README, `layout.tsx` `metadataBase`, and the GitHub repo
+homepage all point at the new one.
+
+Wrinkle worth noting: `vercel alias set <new> <old-alias>` creates an
+alias-to-alias CNAME chain, which Vercel's deployment-protection
+gates with a 401. The right command is `vercel domains add
+<new-alias>` from the linked project directory — that attaches the
+alias directly to the latest production deployment and skips the
+protection wall. Lesson: for `.vercel.app` aliases, treat them as
+project-domain attachments, not deployment redirects.
+
 ## 2026-05-26 — Web UI refactor: "the keep tour" medieval reframe #milestone #decision
 
 Halberd's site is now structured as a tour through a fortified keep:
