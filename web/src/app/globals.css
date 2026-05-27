@@ -17,10 +17,22 @@
   --color-success: #00d48b;
   --color-warning: #ffb547;
 
+  /* "Keep tour" palette — used only at ceremonial moments (wax seals,
+     active nav rail, rule pack crests). The tech accents above stay for
+     functional UI; these stay for narrative UI. */
+  --color-brass: #b08948;
+  --color-brass-dim: #8a6a37;
+  --color-wax: #a3252e;
+  --color-wax-dim: #7a1d23;
+  --color-ink: #2d4a7c;
+  --color-parchment: #f0e6d2;
+
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
     system-ui, sans-serif;
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
     "Inter", system-ui, sans-serif;
+  --font-serif: var(--font-display-serif), "Cormorant Garamond",
+    "EB Garamond", Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
 }
 

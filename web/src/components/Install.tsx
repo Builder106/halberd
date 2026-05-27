@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { SectionMarker } from "./SectionMarker";
 
 function CopyableBlock({ children }: { children: string }) {
   const [copied, setCopied] = useState(false);
@@ -26,15 +27,20 @@ function CopyableBlock({ children }: { children: string }) {
 export function Install() {
   return (
     <section
-      id="install"
-      className="relative max-w-6xl mx-auto px-6 py-24 border-b border-(--color-border)"
+      id="gatehouse"
+      className="relative max-w-5xl mx-auto px-6 py-24 border-b border-(--color-border)"
     >
-      <h2
-        className="text-3xl font-bold mb-3"
-        style={{ fontFamily: "var(--font-display)" }}
+      <SectionMarker
+        numeral="V"
+        ceremonial="The Gatehouse Keys"
+        functional="Install Halberd at your own gate"
+      />
+      <p
+        className="text-(--color-fg) mb-3 italic text-lg"
+        style={{ fontFamily: "var(--font-serif)" }}
       >
-        Install
-      </h2>
+        Take these and stand a watch of your own.
+      </p>
       <p className="text-(--color-fg-2) mb-12 max-w-2xl">
         Pre-built binaries ship for linux and darwin × amd64 and arm64. Each
         archive bundles all four binaries plus every rule pack.
@@ -42,14 +48,30 @@ export function Install() {
 
       <div className="grid md:grid-cols-2 gap-8">
         <div>
-          <h3 className="font-semibold mb-3">Download a release</h3>
+          <h3
+            className="font-semibold mb-3 text-(--color-fg)"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            <span className="text-(--color-brass) mr-2" aria-hidden>
+              ❦
+            </span>
+            Download a release
+          </h3>
           <CopyableBlock>{`curl -L https://github.com/Builder106/Halberd/releases/latest/download/\\
   halberd_\${VERSION}_\${OS}_\${ARCH}.tar.gz | tar -xz
 ./halberd version`}</CopyableBlock>
         </div>
 
         <div>
-          <h3 className="font-semibold mb-3">Build from source</h3>
+          <h3
+            className="font-semibold mb-3 text-(--color-fg)"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            <span className="text-(--color-brass) mr-2" aria-hidden>
+              ❦
+            </span>
+            Build from source
+          </h3>
           <CopyableBlock>{`brew install go
 git clone https://github.com/Builder106/Halberd && cd Halberd
 go build -o bin/ ./cmd/...
@@ -57,7 +79,15 @@ go build -o bin/ ./cmd/...
         </div>
 
         <div>
-          <h3 className="font-semibold mb-3">Wrap a local stdio server (Claude Desktop)</h3>
+          <h3
+            className="font-semibold mb-3 text-(--color-fg)"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            <span className="text-(--color-brass) mr-2" aria-hidden>
+              ❦
+            </span>
+            Wrap a local stdio server (Claude Desktop)
+          </h3>
           <p className="text-sm text-(--color-fg-3) mb-3">
             Edit{" "}
             <code>~/Library/Application Support/Claude/claude_desktop_config.json</code>{" "}
@@ -76,7 +106,15 @@ go build -o bin/ ./cmd/...
         </div>
 
         <div>
-          <h3 className="font-semibold mb-3">HTTP transport (remote MCP)</h3>
+          <h3
+            className="font-semibold mb-3 text-(--color-fg)"
+            style={{ fontFamily: "var(--font-serif)" }}
+          >
+            <span className="text-(--color-brass) mr-2" aria-hidden>
+              ❦
+            </span>
+            HTTP transport (remote MCP)
+          </h3>
           <p className="text-sm text-(--color-fg-3) mb-3">
             Sit between your agent and a remote MCP server:
           </p>

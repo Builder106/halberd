@@ -11,6 +11,9 @@ import {
   type ResponseResult,
 } from "../lib/halberd";
 import { presets, type Preset } from "../lib/presets";
+import { SectionMarker } from "./SectionMarker";
+import { WaxSeal } from "./WaxSeal";
+import { Crest } from "./Crest";
 
 type EngineState =
   | { kind: "loading" }
@@ -110,31 +113,35 @@ export function Playground() {
 
   return (
     <section
-      id="playground"
-      className="relative max-w-6xl mx-auto px-6 py-24 border-b border-(--color-border)"
+      id="sentry"
+      className="relative max-w-5xl mx-auto px-6 py-24 border-b border-(--color-border)"
     >
-      <h2
-        className="text-3xl font-bold mb-3"
-        style={{ fontFamily: "var(--font-display)" }}
+      <SectionMarker
+        numeral="II"
+        ceremonial="The Sentry's Challenge"
+        functional="Try Halberd in the browser"
+      />
+      <p
+        className="text-(--color-fg) mb-3 italic text-lg"
+        style={{ fontFamily: "var(--font-serif)" }}
       >
-        Try Halberd in the browser
-      </h2>
+        State your purpose, traveller.
+      </p>
       <p className="text-(--color-fg-2) mb-12 max-w-2xl">
-        The real{" "}
-        <code>internal/policy</code> engine compiled to WebAssembly and
-        running client-side. Pick a rule pack, paste or load a JSON-RPC
-        envelope, and see what Halberd would do.
+        The real <code>internal/policy</code> engine compiled to WebAssembly
+        and running client-side. Pick a rule pack, paste a JSON-RPC envelope,
+        and see what the sentry would do.
       </p>
 
       {engine.kind === "loading" && (
         <div className="p-6 rounded-lg border border-(--color-border) bg-(--color-panel)/40 text-sm text-(--color-fg-2) font-mono">
-          Loading halberd-wasm… (4.5 MiB binary, ~1 MiB over the wire)
+          Raising the gate… (4.5 MiB engine, ~1 MiB over the wire)
         </div>
       )}
 
       {engine.kind === "error" && (
-        <div className="p-6 rounded-lg border border-(--color-danger)/40 bg-(--color-danger)/10 text-sm text-(--color-danger) font-mono">
-          Failed to load engine: {engine.message}
+        <div className="p-6 rounded-lg border border-(--color-wax)/40 bg-(--color-wax)/10 text-sm text-(--color-wax) font-mono">
+          The sentry could not be reached: {engine.message}
         </div>
       )}
 
@@ -144,28 +151,34 @@ export function Playground() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-(--color-fg-2) mb-2">
-                Rule pack
+                Garrison · which sentry stands the watch
               </label>
-              <select
-                value={pack}
-                onChange={(e) => onPackChange(e.target.value)}
-                className="w-full px-3 py-2 rounded-md font-mono text-sm border border-(--color-border) bg-(--color-panel) text-(--color-fg) focus:outline-none focus:border-(--color-accent)"
-              >
-                {engine.packs.map((p) => (
-                  <option key={p.name} value={p.name}>
-                    {p.name}
-                    {p.responseFilters ? "  ·  response filters on" : ""}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-3">
+                <Crest pack={pack} size={22} />
+                <select
+                  value={pack}
+                  onChange={(e) => onPackChange(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-md font-mono text-sm border border-(--color-border) bg-(--color-panel) text-(--color-fg) focus:outline-none focus:border-(--color-brass)"
+                >
+                  {engine.packs.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.name}
+                      {p.responseFilters ? "  ·  scribes also amend responses" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-(--color-fg-2) mb-2">
-                Direction
+                Direction · who comes to the gate
               </label>
               <div className="inline-flex rounded-md border border-(--color-border) overflow-hidden">
-                {(["request", "response"] as const).map((d) => (
+                {([
+                  { d: "request", label: "request — inbound" },
+                  { d: "response", label: "response — outbound" },
+                ] as const).map(({ d, label }) => (
                   <button
                     key={d}
                     onClick={() => setDirection(d)}
@@ -175,7 +188,7 @@ export function Playground() {
                         : "bg-(--color-panel) text-(--color-fg-2) hover:text-(--color-fg)"
                     }`}
                   >
-                    {d}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -184,7 +197,7 @@ export function Playground() {
             {packPresets.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-(--color-fg-2) mb-2">
-                  Presets
+                  Scenarios · attacks the garrison drills against
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {packPresets.map((p) => (
@@ -208,39 +221,52 @@ export function Playground() {
 
             <div>
               <label className="block text-sm font-medium text-(--color-fg-2) mb-2">
-                Payload ({direction === "request" ? "JSON-RPC tools/call" : "JSON-RPC response"})
+                Dispatch · the JSON-RPC envelope at the gate
               </label>
               <textarea
                 value={payload}
                 onChange={(e) => setPayload(e.target.value)}
                 spellCheck={false}
                 rows={14}
-                className="w-full px-3 py-2 rounded-md font-mono text-xs border border-(--color-border) bg-(--color-bg-2) text-(--color-fg) focus:outline-none focus:border-(--color-accent) resize-y"
+                className="w-full px-3 py-2 rounded-md font-mono text-xs border border-(--color-border) bg-(--color-bg-2) text-(--color-fg) focus:outline-none focus:border-(--color-brass) resize-y"
               />
             </div>
 
             <button
               onClick={evaluate}
-              className="w-full px-5 py-3 rounded-md font-medium bg-(--color-fg) text-(--color-bg) hover:opacity-90 transition"
+              className="w-full px-5 py-3 rounded-md font-medium bg-(--color-fg) text-(--color-bg) hover:opacity-90 transition flex items-center justify-center gap-2"
             >
-              Evaluate →
+              <span className="text-(--color-brass)" aria-hidden>
+                ⚔
+              </span>
+              Challenge the envelope
+              <span aria-hidden>→</span>
             </button>
           </div>
 
-          {/* Right column: output */}
+          {/* Right column: the verdict */}
           <div className="space-y-4">
             <label className="block text-sm font-medium text-(--color-fg-2)">
-              Halberd&apos;s decision
+              The verdict · pressed in wax by the sentry
               {latencyMs !== null && (
                 <span className="ml-2 font-mono text-xs text-(--color-fg-3)">
-                  ({latencyMs}ms)
+                  · {latencyMs}ms
                 </span>
               )}
             </label>
 
             {output.kind === "idle" && (
-              <div className="p-8 rounded-lg border border-dashed border-(--color-border) text-sm text-(--color-fg-3) text-center">
-                Click <code>Evaluate</code> to see the decision.
+              <div className="p-8 rounded-lg border border-dashed border-(--color-border) text-center">
+                <p
+                  className="italic text-(--color-fg-3) text-lg"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  Awaiting a challenge.
+                </p>
+                <p className="mt-2 font-mono text-xs text-(--color-fg-3)">
+                  press <span className="text-(--color-fg-2)">Challenge</span>{" "}
+                  to see the verdict.
+                </p>
               </div>
             )}
 
@@ -262,33 +288,37 @@ function RequestVerdict({ decision }: { decision: Decision }) {
   const blocked = decision.Blocked;
   return (
     <div
-      className={`rounded-lg border p-5 ${
+      className={`rounded-lg border p-6 ${
         blocked
-          ? "border-(--color-danger)/40 bg-(--color-danger)/5"
-          : "border-(--color-success)/40 bg-(--color-success)/5"
+          ? "border-(--color-wax)/40 bg-(--color-wax)/5"
+          : "border-(--color-brass)/40 bg-(--color-brass)/5"
       }`}
     >
-      <div className="flex items-center gap-3 mb-4">
-        <span
-          className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
-            blocked ? "bg-(--color-danger)" : "bg-(--color-success)"
-          }`}
-        >
-          <span className="text-(--color-bg) font-bold">
-            {blocked ? "⛔" : "✓"}
-          </span>
-        </span>
-        <span
-          className={`font-mono text-sm uppercase tracking-wider ${
-            blocked ? "text-(--color-danger)" : "text-(--color-success)"
-          }`}
-        >
-          {blocked ? "Blocked" : "Allowed"}
-        </span>
+      <div className="flex items-start gap-5 mb-4">
+        <WaxSeal variant={blocked ? "refused" : "granted"} size={112} />
+        <div className="flex-1 pt-2">
+          <p
+            className="text-2xl mb-1"
+            style={{
+              fontFamily: "var(--font-serif)",
+              color: blocked ? "var(--color-wax)" : "var(--color-brass)",
+            }}
+          >
+            {blocked ? "Refused" : "Pass granted"}
+          </p>
+          <p className="font-mono text-xs text-(--color-fg-3) tracking-wider">
+            {blocked
+              ? "the envelope is returned to its sender with a synthetic JSON-RPC error"
+              : "the envelope is forwarded to the upstream MCP server unchanged"}
+          </p>
+        </div>
       </div>
 
       {blocked && decision.Violations && decision.Violations.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-3 mt-5">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-(--color-fg-3)">
+            ⌜ proclamation ⌟
+          </p>
           {decision.Violations.map((v, i) => (
             <div
               key={i}
@@ -319,13 +349,7 @@ function RequestVerdict({ decision }: { decision: Decision }) {
             </div>
           ))}
         </div>
-      ) : (
-        <p className="text-sm text-(--color-fg-2) font-mono">
-          {blocked
-            ? "Blocked, but no violation details."
-            : "Forwarded to upstream unchanged."}
-        </p>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -338,39 +362,44 @@ function ResponseVerdict({
   original: string;
 }) {
   const detections = result.detections ?? [];
+  const modified = result.modified;
   return (
     <div
-      className={`rounded-lg border p-5 ${
-        result.modified
-          ? "border-(--color-warning)/40 bg-(--color-warning)/5"
-          : "border-(--color-success)/40 bg-(--color-success)/5"
+      className={`rounded-lg border p-6 ${
+        modified
+          ? "border-(--color-ink)/40 bg-(--color-ink)/5"
+          : "border-(--color-brass)/40 bg-(--color-brass)/5"
       }`}
     >
-      <div className="flex items-center gap-3 mb-4">
-        <span
-          className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${
-            result.modified ? "bg-(--color-warning)" : "bg-(--color-success)"
-          }`}
-        >
-          <span className="text-(--color-bg) font-bold">
-            {result.modified ? "✎" : "✓"}
-          </span>
-        </span>
-        <span
-          className={`font-mono text-sm uppercase tracking-wider ${
-            result.modified ? "text-(--color-warning)" : "text-(--color-success)"
-          }`}
-        >
-          {result.modified ? "Sanitized" : "Passed through"}
-        </span>
+      <div className="flex items-start gap-5 mb-4">
+        <WaxSeal variant={modified ? "amended" : "granted"} size={112} />
+        <div className="flex-1 pt-2">
+          <p
+            className="text-2xl mb-1"
+            style={{
+              fontFamily: "var(--font-serif)",
+              color: modified ? "var(--color-ink)" : "var(--color-brass)",
+            }}
+          >
+            {modified ? "Amended" : "Passed through"}
+          </p>
+          <p className="font-mono text-xs text-(--color-fg-3) tracking-wider">
+            {modified
+              ? "the auditor struck the offending passages before delivery to the agent"
+              : "the response reached the agent unchanged"}
+          </p>
+        </div>
       </div>
 
       {detections.length > 0 && (
         <div className="mb-4 flex flex-wrap gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-(--color-fg-3) self-center mr-1">
+            ⌜ struck ⌟
+          </span>
           {detections.map((d, i) => (
             <span
               key={i}
-              className="font-mono text-xs px-2 py-0.5 rounded border border-(--color-warning)/30 text-(--color-warning) bg-(--color-warning)/10"
+              className="font-mono text-xs px-2 py-0.5 rounded border border-(--color-ink)/30 text-(--color-ink) bg-(--color-ink)/10"
               title={d.path}
             >
               {d.kind}
@@ -380,16 +409,18 @@ function ResponseVerdict({
       )}
 
       <label className="block text-xs font-mono text-(--color-fg-3) mb-1">
-        {result.modified ? "Rewritten payload (what the agent sees):" : "Payload (unchanged):"}
+        {modified
+          ? "as delivered to the agent (rewritten):"
+          : "as delivered to the agent (unchanged):"}
       </label>
       <pre className="font-mono text-xs bg-(--color-panel) border border-(--color-border) rounded p-3 max-h-64 overflow-auto whitespace-pre-wrap break-words">
         {tryPretty(result.payload)}
       </pre>
 
-      {result.modified && (
+      {modified && (
         <details className="mt-3">
           <summary className="text-xs font-mono text-(--color-fg-3) cursor-pointer hover:text-(--color-fg-2)">
-            show original
+            show the original as the server wrote it
           </summary>
           <pre className="mt-2 font-mono text-xs bg-(--color-bg-2) border border-(--color-border) rounded p-3 max-h-64 overflow-auto whitespace-pre-wrap break-words">
             {tryPretty(original)}

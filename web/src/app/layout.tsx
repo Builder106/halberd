@@ -1,5 +1,15 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+
+// Display serif used only for the ceremonial section headers ("II. THE
+// SENTRY'S CHALLENGE"). Body copy and code keep the existing sans/mono.
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+  variable: "--font-display-serif",
+});
 
 const siteUrl = "https://halberd-six.vercel.app";
 
@@ -60,7 +70,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="h-full antialiased dark">
+    <html
+      lang="en"
+      className={`h-full antialiased dark ${cormorant.variable}`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

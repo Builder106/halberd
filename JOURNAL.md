@@ -4,6 +4,50 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-05-26 — Web UI refactor: "the keep tour" medieval reframe #milestone #decision
+
+Halberd's site is now structured as a tour through a fortified keep:
+
+- **I. The Approach** — hero
+- **II. The Sentry's Challenge** — playground
+- **III. The Threats at the Gate** — threat model
+- **IV. The Armory** — bundled rule packs
+- **V. The Gatehouse Keys** — install
+
+Left-rail nav (sticky on desktop, hamburger on mobile) tracks the
+active section via scroll position. Each section header has a
+Roman-numeral marker in Cormorant Garamond display serif, a
+ceremonial title, and a smaller functional sans subtitle. Decision
+panels in the playground render as **wax seals**: red wax for refused
+requests, brass for granted, blue ink for amended responses. Each
+rule pack chip carries a small bespoke **heraldic crest** (boar for
+postgres, scroll-with-seal for filesystem, branch-graph chevron for
+git, octofoil for github, bee for honeypot).
+
+Three calls worth recording:
+
+- **Theme at moments of drama, not everywhere.** Section headers,
+  decision verdicts, and rule-pack identity get the medieval
+  treatment. Body copy, install commands, code blocks, and threat
+  descriptions stay in the existing crisp sans for legibility.
+  Picked over "woven motifs" (too restrained) and "auditor's ledger"
+  (too localized) options.
+- **Refined display serif, not faux-medieval.** Cormorant Garamond
+  via next/font/google for ceremonial moments. Cinzel / Uncial /
+  blackletter would have tipped into Renaissance Fair cosplay. The
+  brass-wax-parchment palette additions live alongside the existing
+  cyan/purple tech accents — the contrast IS the brand.
+- **Saved the direction to memory.** Future sessions could otherwise
+  drift back to the generic cyberpunk-tech default. The memory entry
+  at `halberd-keep-tour-brand.md` locks in the section names, palette,
+  and the "no faux-medieval fonts / no parchment textures" rules.
+
+Build was straightforward except for one TS type narrowing pinch:
+`as const`-tagged section list made `current = sections[0].id` infer
+as a single-literal type, blocking later assignments. Widened the
+local to `string`. Live deploy on halberd-six.vercel.app within
+~3 minutes of `vercel deploy --prod`.
+
 ## 2026-05-26 — Deployed playground site at halberd-six.vercel.app #milestone
 
 Halberd now has a live homepage at
