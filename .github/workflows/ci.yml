@@ -139,3 +139,14 @@ jobs:
       - name: next lint
         working-directory: web
         run: npx next lint || true   # warnings, not blockers, for v0.1
+
+      - name: install Playwright browsers
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: QA suite (WASM bridge contract tests)
+        working-directory: web
+        # Boots `next start` automatically via Playwright's webServer
+        # config and exercises globalThis.halberd.* end-to-end against
+        # the freshly-built bundle.
+        run: npm run test:qa
