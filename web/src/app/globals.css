@@ -19,21 +19,34 @@
 
   /* "Keep tour" palette — used only at ceremonial moments (wax seals,
      active nav rail, rule pack crests). The tech accents above stay for
-     functional UI; these stay for narrative UI. */
+     functional UI; these stay for narrative UI.
+
+     The brass set now includes a lit highlight (for hovered crests +
+     candlelight glints) and a weathered tone for ageing details such as
+     the wordmark seal pressed into the corner of the keep. */
   --color-brass: #b08948;
   --color-brass-dim: #8a6a37;
+  --color-brass-lit: #d6a55c;        /* candlelit highlight */
+  --color-brass-weathered: #6e552b;  /* aged tarnish */
   --color-wax: #a3252e;
   --color-wax-dim: #7a1d23;
+  --color-wax-deep: #5c161b;         /* shadow under a pressed seal */
   --color-ink: #2d4a7c;
   --color-parchment: #f0e6d2;
+  --color-parchment-shade: #d8c89b;
+  --color-candle: #f5c97a;           /* warm hearth glow */
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
-    system-ui, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "Inter", system-ui, sans-serif;
+  /* Font stack — Garamond display for ceremonial type, Manrope body for
+     narrative + UI, JetBrains Mono for code. Each is loaded via
+     next/font in layout.tsx and exposed here through CSS variables. */
+  --font-sans: var(--font-body-sans), "Manrope", -apple-system,
+    BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font-display: var(--font-body-sans), "Manrope", -apple-system,
+    BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
   --font-serif: var(--font-display-serif), "Cormorant Garamond",
     "EB Garamond", Georgia, serif;
-  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+  --font-mono: var(--font-body-mono), "JetBrains Mono",
+    ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 html,
@@ -41,6 +54,25 @@ body {
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans);
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Candlelit-parchment grain — a fixed SVG noise layer warmed toward
+ * brass + a slow vignette that simulates a torch flickering off the
+ * keep walls. Applied at the body level so every section feels the
+ * atmosphere without any component needing to opt in. */
+body {
+  background-image:
+    /* parchment grit, warmed toward the brass channel */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.34  0 0 0 0 0.20  0 0 0 0.045 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>"),
+    /* corner candlelight wash — bottom-left, far from the eye line */
+    radial-gradient(
+      55% 50% at 8% 102%,
+      rgba(176, 137, 72, 0.07) 0%,
+      transparent 70%
+    );
+  background-attachment: fixed, fixed;
+  background-size: 260px 260px, 100% 100%;
 }
 
 /* Subtle 40px grid that the hero + footer can show through */
@@ -51,9 +83,30 @@ body {
   background-size: 40px 40px;
 }
 
+/* Parchment grain that components can opt into. Use on cards or callouts
+ * that need to read as "scroll" rather than "screen". */
+.parchment-grain {
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.50  0 0 0 0 0.40  0 0 0 0 0.23  0 0 0 0.07 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 180px 180px;
+}
+
+/* Hairline gold-leaf rule, often paired with the brass wordmark.
+ * Reads as a single struck line in a manuscript margin. */
+.rule-brass {
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    var(--color-brass-weathered) 15%,
+    var(--color-brass) 50%,
+    var(--color-brass-weathered) 85%,
+    transparent 100%
+  );
+}
+
 /* Selection: pick the brand accent so highlighted code reads on-brand */
 ::selection {
-  background: rgba(124, 77, 255, 0.35);
+  background: rgba(176, 137, 72, 0.35);
   color: var(--color-fg);
 }
 

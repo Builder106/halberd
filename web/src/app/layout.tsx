@@ -1,16 +1,36 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond } from "next/font/google";
+import { Cormorant_Garamond, Manrope, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 // Display serif used only for the ceremonial section headers ("II. THE
-// SENTRY'S CHALLENGE"). Body copy and code keep the existing sans/mono.
+// SENTRY'S CHALLENGE") and the keep tour rail. The brand calls for a
+// high-contrast Garamond with strong italics.
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
   variable: "--font-display-serif",
+});
+
+// Body copy — Manrope is a characterful grotesque with a warmer roundness
+// than Inter; reads as a printer's body type next to the Garamond display.
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-body-sans",
+});
+
+// Monospace — used for tools/call payloads, policy YAML, status lines. The
+// JetBrains glyph set has the punctuation density these need.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-body-mono",
 });
 
 const siteUrl = "https://halberd-keep.vercel.app";
@@ -74,7 +94,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased dark ${cormorant.variable}`}
+      className={`h-full antialiased dark ${cormorant.variable} ${manrope.variable} ${jetbrainsMono.variable}`}
     >
       <body className="min-h-full flex flex-col">
         {children}
