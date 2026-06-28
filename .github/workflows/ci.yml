@@ -144,9 +144,25 @@ jobs:
         working-directory: web
         run: npx playwright install --with-deps chromium
 
-      - name: QA suite (WASM bridge contract tests)
+      - name: Start Next.js server
         working-directory: web
-        # Boots `next start` automatically via Playwright's webServer
-        # config and exercises globalThis.halberd.* end-to-end against
-        # the freshly-built bundle.
-        run: npm run test:qa
+        run: npx next start --port 3010 &
+
+      - name: Wait for server
+        run: timeout 30 bash -c 'until curl -sf http://localhost:3010 > /dev/null 2>&1; do sleep 1; done'
+
+      - name: QA suite — WASM bridge contract tests
+        working-directory: web
+        env:
+          HALBERD_URL: http://localhost:3010
+        run: npx playwright test --config playwright.qa.config.ts
+
+      - name: Generate Gherkin specs
+        working-directory: web
+        run: npx bddgen --config playwright.qa-bdd.config.ts
+
+      - name: QA suite — Gherkin UI flow tests
+        working-directory: web
+        env:
+          HALBERD_URL: http://localhost:3010
+        run: npx playwright test --config playwright.qa-bdd.config.ts
