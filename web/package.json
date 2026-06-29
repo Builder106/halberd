@@ -9,7 +9,9 @@
     "lint": "eslint",
     "demo": "bddgen --config playwright.demo.config.ts && playwright test --config playwright.demo.config.ts",
     "test:qa": "playwright test --config playwright.qa.config.ts",
-    "test:qa:bdd": "bddgen --config playwright.qa-bdd.config.ts && playwright test --config playwright.qa-bdd.config.ts"
+    "test:qa:bdd": "bddgen --config playwright.qa-bdd.config.ts && playwright test --config playwright.qa-bdd.config.ts",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
@@ -24,12 +26,14 @@
     "@types/node": "^26",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.3",
     "eslint": "^10",
     "eslint-config-next": "16.2.9",
     "playwright": "^1.61.1",
     "playwright-bdd": "^9.2.0",
     "tailwindcss": "^4",
-    "typescript": "^6"
+    "typescript": "^6",
+    "vitest": "^4.1.9"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
