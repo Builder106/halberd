@@ -130,7 +130,7 @@ jobs:
 
       - name: npm install
         working-directory: web
-        run: npm ci
+        run: npm ci || npm install
 
       - name: next build
         working-directory: web
