@@ -19,7 +19,7 @@ tools:
   - name: echo
     action: allow
 `
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatalf("failed to write test policy: %v", err)
 	}
 	return path
