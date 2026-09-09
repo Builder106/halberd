@@ -23,6 +23,13 @@ updates:
         update-types:
           - "minor"
           - "patch"
+      vitest:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+    ignore:
+      - dependency-name: "eslint"
+        versions: [">= 10.a"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -35,3 +42,5 @@ updates:
     ignore:
       - dependency-name: "typescript"
         versions: [">= 7.0.0"]
+      - dependency-name: "golangci/golangci-lint-action"
+        versions: [">= 7.a"]
