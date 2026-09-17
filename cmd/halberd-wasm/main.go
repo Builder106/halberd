@@ -40,12 +40,12 @@ func main() {
 		return
 	}
 
-	js.Global().Set("halberd", js.ValueOf(map[string]any{
-		"packs":            js.FuncOf(packsFn),
-		"evaluateRequest":  js.FuncOf(evaluateRequestFn),
-		"evaluateResponse": js.FuncOf(evaluateResponseFn),
-		"version":          "0.1.0-wasm",
-	}))
+	halberd := js.Global().Get("Object").New()
+	halberd.Set("packs", js.FuncOf(packsFn))
+	halberd.Set("evaluateRequest", js.FuncOf(evaluateRequestFn))
+	halberd.Set("evaluateResponse", js.FuncOf(evaluateResponseFn))
+	halberd.Set("version", "0.1.0-wasm")
+	js.Global().Set("halberd", halberd)
 
 	fmt.Println("halberd-wasm: engine ready,", len(engines), "rule packs loaded")
 
@@ -146,7 +146,7 @@ func evaluateResponseFn(_ js.Value, args []js.Value) any {
 	return string(b)
 }
 
-func jsErr(msg string) any {
+func jsErr(msg string) string {
 	b, _ := json.Marshal(map[string]string{"error": msg})
 	return string(b)
 }

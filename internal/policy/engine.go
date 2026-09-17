@@ -69,8 +69,8 @@ func (e *Engine) EvaluateRequest(payload []byte) Decision {
 
 func (e *Engine) evaluateToolCall(raw json.RawMessage) Decision {
 	var params struct {
-		Name      string         `json:"name"`
-		Arguments map[string]any `json:"arguments"`
+		Name      string                     `json:"name"`
+		Arguments map[string]json.RawMessage `json:"arguments"`
 	}
 	if err := json.Unmarshal(raw, &params); err != nil {
 		return Decision{
@@ -114,16 +114,16 @@ func (e *Engine) evaluateToolCall(raw json.RawMessage) Decision {
 	}
 }
 
-func evaluateArg(tool, name string, val any, rule ArgumentRule) []Violation {
-	str, ok := val.(string)
-	if !ok {
+func evaluateArg(tool, name string, val json.RawMessage, rule ArgumentRule) []Violation {
+	var str string
+	if err := json.Unmarshal(val, &str); err != nil {
 		if rule.Type == "string" {
 			return []Violation{{
 				Category: CategoryArgInjection,
 				Tool:     tool,
 				Field:    name,
 				Rule:     "type_mismatch",
-				Detail:   fmt.Sprintf("expected string, got %T", val),
+				Detail:   fmt.Sprintf("expected string, got %s", string(val)),
 			}}
 		}
 		return nil

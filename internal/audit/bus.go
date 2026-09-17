@@ -22,7 +22,7 @@ type Event struct {
 	Method     string    `json:"method,omitempty"`
 	Tool       string    `json:"tool,omitempty"`
 	Blocked    bool      `json:"blocked"`
-	Violations any       `json:"violations,omitempty"`
+	Violations json.RawMessage `json:"violations,omitempty"`
 	RemoteAddr string    `json:"remote_addr,omitempty"`
 }
 

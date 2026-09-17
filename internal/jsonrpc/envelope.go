@@ -29,9 +29,9 @@ type Response struct {
 
 // Error is the JSON-RPC 2.0 error object embedded in a Response.
 type Error struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    any    `json:"data,omitempty"`
+	Code    int             `json:"code"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data,omitempty"`
 }
 
 

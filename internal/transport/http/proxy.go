@@ -64,9 +64,10 @@ func NewHandler(target *url.URL, engine *policy.Engine, bus *audit.Bus) http.Han
 
 			result := engine.EvaluateResponse(body)
 			if len(result.Detections) > 0 {
+				detBytes, _ := json.Marshal(result.Detections)
 				bus.Record(audit.Event{
 					Direction:  "response",
-					Violations: result.Detections,
+					Violations: detBytes,
 				})
 			}
 
@@ -94,12 +95,16 @@ func NewHandler(target *url.URL, engine *policy.Engine, bus *audit.Bus) http.Han
 		decision := engine.EvaluateRequest(body)
 
 		method, tool := peek(body)
+		var violBytes json.RawMessage
+		if len(decision.Violations) > 0 {
+			violBytes, _ = json.Marshal(decision.Violations)
+		}
 		bus.Record(audit.Event{
 			Direction:  "request",
 			Method:     method,
 			Tool:       tool,
 			Blocked:    decision.Blocked,
-			Violations: decision.Violations,
+			Violations: violBytes,
 			RemoteAddr: r.RemoteAddr,
 		})
 
@@ -122,7 +127,8 @@ func writePolicyViolation(w http.ResponseWriter, requestBody []byte, d policy.De
 		summary = "halberd: " + d.Violations[0].Rule + " on " + d.Violations[0].Field
 	}
 
-	resp, _ := jsonrpc.PolicyViolation(id, summary, d.Violations)
+	violBytes, _ := json.Marshal(d.Violations)
+	resp, _ := jsonrpc.PolicyViolation(id, summary, violBytes)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK) // JSON-RPC errors ride a 200 with error in body

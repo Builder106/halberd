@@ -101,10 +101,29 @@ type rpcError struct {
 	Message string `json:"message"`
 }
 
+type ServerInfo struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+type ServerCapabilities struct {
+	Tools map[string]struct{} `json:"tools"`
+}
+
+type InitializeResult struct {
+	ProtocolVersion string             `json:"protocolVersion"`
+	Capabilities    ServerCapabilities `json:"capabilities"`
+	ServerInfo      ServerInfo         `json:"serverInfo"`
+}
+
+type ToolsListResult struct {
+	Tools []Tool `json:"tools"`
+}
+
 type response struct {
 	JSONRPC string          `json:"jsonrpc"`
 	ID      json.RawMessage `json:"id"`
-	Result  any             `json:"result,omitempty"`
+	Result  json.RawMessage `json:"result,omitempty"`
 	Error   *rpcError       `json:"error,omitempty"`
 }
 
@@ -113,17 +132,17 @@ func dispatch(id json.RawMessage, method string, params json.RawMessage) respons
 
 	switch method {
 	case "initialize":
-		r.Result = map[string]any{
-			"protocolVersion": "2024-11-05",
-			"capabilities":    map[string]any{"tools": map[string]any{}},
-			"serverInfo":      map[string]any{"name": "halberd-honeypot", "version": version},
-		}
+		r.Result, _ = json.Marshal(InitializeResult{
+			ProtocolVersion: "2024-11-05",
+			Capabilities:    ServerCapabilities{Tools: map[string]struct{}{}},
+			ServerInfo:      ServerInfo{Name: "halberd-honeypot", Version: version},
+		})
 	case "ping":
-		r.Result = map[string]any{}
+		r.Result = json.RawMessage(`{}`)
 	case "tools/list":
-		r.Result = map[string]any{"tools": toolList}
+		r.Result, _ = json.Marshal(ToolsListResult{Tools: toolList})
 	case "tools/call":
-		r.Result = callTool(params)
+		r.Result, _ = json.Marshal(callTool(params))
 	default:
 		r.Error = &rpcError{Code: -32601, Message: "method not found: " + method}
 	}

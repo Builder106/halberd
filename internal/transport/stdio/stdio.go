@@ -85,12 +85,16 @@ func Wrap(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host HostS
 			decision := engine.EvaluateRequest(line)
 
 			method, tool := peekMethodTool(line)
+			var violBytes json.RawMessage
+			if len(decision.Violations) > 0 {
+				violBytes, _ = json.Marshal(decision.Violations)
+			}
 			bus.Record(audit.Event{
 				Direction:  "request",
 				Method:     method,
 				Tool:       tool,
 				Blocked:    decision.Blocked,
-				Violations: decision.Violations,
+				Violations: violBytes,
 			})
 
 			if decision.Blocked {
@@ -100,7 +104,7 @@ func Wrap(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host HostS
 					// the audit entry above is the only record.
 					continue
 				}
-				resp, _ := jsonrpc.PolicyViolation(id, summarize(decision), decision.Violations)
+				resp, _ := jsonrpc.PolicyViolation(id, summarize(decision), violBytes)
 				if err := writeHostLine(resp); err != nil {
 					slog.Error("write blocked response to host", "err", err)
 					return
@@ -142,9 +146,10 @@ func Wrap(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host HostS
 				result := engine.EvaluateResponse(owned)
 				payload = result.Payload
 				if len(result.Detections) > 0 {
+					detBytes, _ := json.Marshal(result.Detections)
 					bus.Record(audit.Event{
 						Direction:  "response",
-						Violations: result.Detections,
+						Violations: detBytes,
 					})
 				}
 			}

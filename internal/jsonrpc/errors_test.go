@@ -8,9 +8,10 @@ import (
 
 func TestPolicyViolation_HasCorrectShape(t *testing.T) {
 	id := json.RawMessage(`42`)
-	raw, err := PolicyViolation(id, "blocked by deny_pattern", []map[string]string{
+	vBytes, _ := json.Marshal([]map[string]string{
 		{"rule": "deny_pattern", "field": "sql"},
 	})
+	raw, err := PolicyViolation(id, "blocked by deny_pattern", vBytes)
 	if err != nil {
 		t.Fatalf("encode: %v", err)
 	}
