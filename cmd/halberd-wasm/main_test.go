@@ -86,7 +86,9 @@ func TestEvaluateRequestFn(t *testing.T) {
 
 		var decision struct {
 			Blocked    bool `json:"Blocked"`
-			Violations any  `json:"Violations"`
+			Violations []struct {
+				Rule string `json:"Rule"`
+			} `json:"Violations"`
 		}
 		if err := json.Unmarshal([]byte(str), &decision); err != nil {
 			t.Fatalf("failed to unmarshal decision: %v", err)
@@ -145,7 +147,9 @@ func TestEvaluateResponseFn(t *testing.T) {
 		var out struct {
 			Modified   bool   `json:"modified"`
 			Payload    string `json:"payload"`
-			Detections []any  `json:"detections"`
+			Detections []struct {
+				Kind string `json:"kind"`
+			} `json:"detections"`
 		}
 		if err := json.Unmarshal([]byte(str), &out); err != nil {
 			t.Fatalf("failed to unmarshal response: %v", err)

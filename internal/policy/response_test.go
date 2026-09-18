@@ -6,6 +6,17 @@ import (
 	"testing"
 )
 
+type responseContent struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type responseEnvelope struct {
+	Result struct {
+		Content []responseContent `json:"content"`
+	} `json:"result"`
+}
+
 const bundleWithResponseFilters = `
 version: 1
 server: test
@@ -53,18 +64,19 @@ func TestEvaluateResponse_StripsANSIInMCPContent(t *testing.T) {
 	}
 	// Decode the rewritten payload and confirm the ESC bytes are gone but
 	// the surrounding structure is intact.
-	var msg map[string]any
+	var msg responseEnvelope
 	if err := json.Unmarshal(r.Payload, &msg); err != nil {
 		t.Fatalf("rewritten payload is not valid JSON: %v\nraw: %s", err, r.Payload)
 	}
-	result := msg["result"].(map[string]any)
-	content := result["content"].([]any)
-	first := content[0].(map[string]any)
-	if first["text"].(string) != "hot path" {
-		t.Errorf("text = %q, want %q", first["text"], "hot path")
+	if len(msg.Result.Content) == 0 {
+		t.Fatal("response content is empty")
 	}
-	if first["type"].(string) != "text" {
-		t.Errorf("type field clobbered: %q", first["type"])
+	first := msg.Result.Content[0]
+	if first.Text != "hot path" {
+		t.Errorf("text = %q, want %q", first.Text, "hot path")
+	}
+	if first.Type != "text" {
+		t.Errorf("type field clobbered: %q", first.Type)
 	}
 }
 
