@@ -9,9 +9,45 @@ import (
 	"testing"
 )
 
+type rpcContent struct {
+	Text string `json:"text"`
+}
+
+type rpcTool struct {
+	Name string `json:"name"`
+}
+
+type rpcServerInfo struct {
+	Name string `json:"name"`
+}
+
+type rpcResult struct {
+	Content    []rpcContent  `json:"content"`
+	IsError    bool           `json:"isError"`
+	ServerInfo rpcServerInfo `json:"serverInfo"`
+	Tools      []rpcTool     `json:"tools"`
+}
+
+type rpcResponse struct {
+	Result *rpcResult `json:"result"`
+	Error  *struct{}  `json:"error"`
+}
+
+type rpcParams struct {
+	Name      string          `json:"name"`
+	Arguments json.RawMessage `json:"arguments"`
+}
+
+type rpcRequest struct {
+	JSONRPC string     `json:"jsonrpc"`
+	ID      int        `json:"id"`
+	Method  string     `json:"method"`
+	Params  *rpcParams `json:"params,omitempty"`
+}
+
 // driveServer pipes one request per line and returns the responses, one
 // per line, in the order the server emitted them.
-func driveServer(t *testing.T, requests ...string) []map[string]any {
+func driveServer(t *testing.T, requests ...string) []rpcResponse {
 	t.Helper()
 	in := strings.NewReader(strings.Join(requests, "\n") + "\n")
 	out := &bytes.Buffer{}
@@ -19,12 +55,12 @@ func driveServer(t *testing.T, requests ...string) []map[string]any {
 		t.Fatalf("serve: %v", err)
 	}
 
-	var responses []map[string]any
+	var responses []rpcResponse
 	for _, line := range strings.Split(strings.TrimRight(out.String(), "\n"), "\n") {
 		if line == "" {
 			continue
 		}
-		var r map[string]any
+		var r rpcResponse
 		if err := json.Unmarshal([]byte(line), &r); err != nil {
 			t.Fatalf("decode %q: %v", line, err)
 		}
@@ -33,21 +69,26 @@ func driveServer(t *testing.T, requests ...string) []map[string]any {
 	return responses
 }
 
-func resultContent(t *testing.T, r map[string]any) string {
+func resultContent(t *testing.T, r rpcResponse) string {
 	t.Helper()
-	result, ok := r["result"].(map[string]any)
-	if !ok {
-		t.Fatalf("response missing result: %+v", r)
+	if r.Result == nil || len(r.Result.Content) == 0 {
+		t.Fatalf("response missing content: %+v", r)
 	}
-	content, ok := result["content"].([]any)
-	if !ok || len(content) == 0 {
-		t.Fatalf("response missing content: %+v", result)
+	return r.Result.Content[0].Text
+}
+
+func toolRequest(t *testing.T, name string, arguments json.RawMessage) string {
+	t.Helper()
+	request, err := json.Marshal(rpcRequest{
+		JSONRPC: "2.0",
+		ID:      1,
+		Method:  "tools/call",
+		Params:  &rpcParams{Name: name, Arguments: arguments},
+	})
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
 	}
-	first, ok := content[0].(map[string]any)
-	if !ok {
-		t.Fatalf("content[0] is not an object: %+v", content[0])
-	}
-	return first["text"].(string)
+	return string(request)
 }
 
 func TestInitialize(t *testing.T) {
@@ -55,25 +96,30 @@ func TestInitialize(t *testing.T) {
 	if len(resps) != 1 {
 		t.Fatalf("expected 1 response, got %d", len(resps))
 	}
-	result := resps[0]["result"].(map[string]any)
-	info := result["serverInfo"].(map[string]any)
-	if info["name"] != "halberd-honeypot" {
-		t.Errorf("serverInfo.name = %v, want halberd-honeypot", info["name"])
+	if resps[0].Result == nil || resps[0].Result.ServerInfo.Name != "halberd-honeypot" {
+		name := "<missing>"
+		if resps[0].Result != nil {
+			name = resps[0].Result.ServerInfo.Name
+		}
+		t.Errorf("serverInfo.name = %v, want halberd-honeypot", name)
 	}
 }
 
 func TestToolsList_AdvertisesFourTools(t *testing.T) {
 	resps := driveServer(t, `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`)
-	tools := resps[0]["result"].(map[string]any)["tools"].([]any)
-	if len(tools) != 4 {
-		t.Fatalf("expected 4 tools, got %d", len(tools))
+	if resps[0].Result == nil || len(resps[0].Result.Tools) != 4 {
+		count := 0
+		if resps[0].Result != nil {
+			count = len(resps[0].Result.Tools)
+		}
+		t.Fatalf("expected 4 tools, got %d", count)
 	}
 	want := map[string]bool{
 		"get_weather": false, "execute_sql": false,
 		"read_file": false, "list_users": false,
 	}
-	for _, tool := range tools {
-		name := tool.(map[string]any)["name"].(string)
+	for _, tool := range resps[0].Result.Tools {
+		name := tool.Name
 		if _, ok := want[name]; !ok {
 			t.Errorf("unexpected tool advertised: %q", name)
 		}
@@ -88,7 +134,7 @@ func TestToolsList_AdvertisesFourTools(t *testing.T) {
 
 func TestGetWeather_EmitsToolPoisoningPayload(t *testing.T) {
 	resps := driveServer(t,
-		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_weather","arguments":{"city":"NYC"}}}`)
+		toolRequest(t, "get_weather", json.RawMessage(`{"city":"NYC"}`)))
 	text := resultContent(t, resps[0])
 	if !strings.Contains(text, "\x1b[") {
 		t.Error("get_weather response missing ANSI escape (T1 payload)")
@@ -100,7 +146,7 @@ func TestGetWeather_EmitsToolPoisoningPayload(t *testing.T) {
 
 func TestExecuteSQL_EchoesQuery(t *testing.T) {
 	resps := driveServer(t,
-		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"execute_sql","arguments":{"query":"SELECT 1"}}}`)
+		toolRequest(t, "execute_sql", json.RawMessage(`{"query":"SELECT 1"}`)))
 	text := resultContent(t, resps[0])
 	if !strings.Contains(text, "SELECT 1") {
 		t.Errorf("execute_sql should echo the query; got %q", text)
@@ -118,14 +164,13 @@ func TestReadFile_OpensActualPath(t *testing.T) {
 	}
 	_ = tmp.Close()
 
-	req, _ := json.Marshal(map[string]any{
-		"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-		"params": map[string]any{
-			"name":      "read_file",
-			"arguments": map[string]any{"path": tmp.Name()},
-		},
-	})
-	resps := driveServer(t, string(req))
+	args, err := json.Marshal(struct {
+		Path string `json:"path"`
+	}{Path: tmp.Name()})
+	if err != nil {
+		t.Fatalf("marshal arguments: %v", err)
+	}
+	resps := driveServer(t, toolRequest(t, "read_file", args))
 	if got := resultContent(t, resps[0]); !strings.Contains(got, want) {
 		t.Errorf("read_file did not return fixture content; got %q", got)
 	}
@@ -133,23 +178,21 @@ func TestReadFile_OpensActualPath(t *testing.T) {
 
 func TestReadFile_SurfacesOSErrors(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "does-not-exist")
-	req, _ := json.Marshal(map[string]any{
-		"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-		"params": map[string]any{
-			"name":      "read_file",
-			"arguments": map[string]any{"path": missing},
-		},
-	})
-	resps := driveServer(t, string(req))
-	result := resps[0]["result"].(map[string]any)
-	if result["isError"] != true {
-		t.Errorf("expected isError=true for missing file; got %+v", result)
+	args, err := json.Marshal(struct {
+		Path string `json:"path"`
+	}{Path: missing})
+	if err != nil {
+		t.Fatalf("marshal arguments: %v", err)
+	}
+	resps := driveServer(t, toolRequest(t, "read_file", args))
+	if resps[0].Result == nil || !resps[0].Result.IsError {
+		t.Errorf("expected isError=true for missing file; got %+v", resps[0].Result)
 	}
 }
 
 func TestListUsers_EmbedsAllThreeSecretShapes(t *testing.T) {
 	resps := driveServer(t,
-		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list_users","arguments":{}}}`)
+		toolRequest(t, "list_users", json.RawMessage(`{}`)))
 	text := resultContent(t, resps[0])
 	if !strings.Contains(text, "AKIA") {
 		t.Error("list_users response missing AWS-key shape (T5)")
@@ -164,17 +207,16 @@ func TestListUsers_EmbedsAllThreeSecretShapes(t *testing.T) {
 
 func TestUnknownTool_ReturnsIsError(t *testing.T) {
 	resps := driveServer(t,
-		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"no_such_tool","arguments":{}}}`)
-	result := resps[0]["result"].(map[string]any)
-	if result["isError"] != true {
-		t.Errorf("expected isError=true for unknown tool; got %+v", result)
+		toolRequest(t, "no_such_tool", json.RawMessage(`{}`)))
+	if resps[0].Result == nil || !resps[0].Result.IsError {
+		t.Errorf("expected isError=true for unknown tool; got %+v", resps[0].Result)
 	}
 }
 
 func TestUnknownMethod_ReturnsJSONRPCError(t *testing.T) {
 	resps := driveServer(t,
 		`{"jsonrpc":"2.0","id":1,"method":"nonsense/method"}`)
-	if _, ok := resps[0]["error"]; !ok {
+	if resps[0].Error == nil {
 		t.Errorf("expected error response for unknown method; got %+v", resps[0])
 	}
 }

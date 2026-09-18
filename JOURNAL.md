@@ -689,3 +689,11 @@ practice) reasons about why the tool failed rather than crashing the session.
 Next step: `brew install go && cd Halberd && go mod tidy && go test ./...`
 to verify the codebase compiles. CI will compile against a fresh toolchain
 either way.
+
+## 2026-09-17 — Typed JSON-RPC test fixtures #decision
+
+Replaced avoidable `map[string]any` and `[]any` test fixtures with typed
+JSON-RPC envelopes and `json.RawMessage` for arguments whose shape is owned by
+the policy pack. Retained `any` only for the `syscall/js.FuncOf` callback ABI
+in the WASM entrypoint. Unit tests passed in the managed Linux ARM64 gate;
+race, vet, WASM, and web checks remain part of final verification.
