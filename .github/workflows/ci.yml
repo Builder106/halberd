@@ -109,7 +109,7 @@ jobs:
           # with 1.25 and cannot parse 1.26's stdlib export data. The Go team
           # backports security fixes to N-1, so 1.25 still receives CVE
           # patches. Bump when golangci-lint adds 1.26 support (issue #6272).
-          go-version: 'stable'
+          go-version: '1.25.x'
           check-latest: true
           cache: true
 
