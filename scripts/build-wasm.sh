@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-cd "$(git rev-parse --show-toplevel)"
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 stage="cmd/halberd-wasm/policies"
 out_wasm="web/public/halberd.wasm"

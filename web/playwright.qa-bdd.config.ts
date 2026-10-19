@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 import { defineBddConfig } from "playwright-bdd";
 
+const testPort = process.env.HALBERD_TEST_PORT ?? "3010";
+
 // QA-BDD config: Gherkin QA scenarios that exercise the playground UI
 // end-to-end — pack picker, preset buttons, challenge button, verdict
 // rendering, violation display, and rewritten payloads. These complement
@@ -30,7 +32,7 @@ export default defineConfig({
   timeout: 60_000,
 
   use: {
-    baseURL: process.env.HALBERD_URL ?? "http://localhost:3010",
+    baseURL: process.env.HALBERD_URL ?? `http://localhost:${testPort}`,
     headless: true,
     viewport: { width: 1280, height: 800 },
     actionTimeout: 15_000,
@@ -40,9 +42,9 @@ export default defineConfig({
   webServer: process.env.HALBERD_URL
     ? undefined
     : {
-        command: "npx next build && npx next start --port 3010",
-        url: "http://localhost:3010",
-        reuseExistingServer: !process.env.CI,
+        command: `npx next build && npx next start --port ${testPort}`,
+        url: `http://localhost:${testPort}`,
+        reuseExistingServer: false,
         timeout: 180_000,
       },
 

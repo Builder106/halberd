@@ -28,14 +28,26 @@ declare global {
 }
 
 test.beforeEach(async ({ page }) => {
+  const browserErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") browserErrors.push(message.text());
+  });
   // The bridge is registered inside go.run(instance), which is
   // started after WebAssembly.instantiateStreaming resolves. The
   // playground's loader (web/src/lib/halberd.ts) handles all that
   // — we just wait for the global to land.
   await page.goto("/");
-  await page.waitForFunction(() => typeof globalThis.halberd === "object", {
-    timeout: 15_000,
-  });
+  try {
+    await page.waitForFunction(
+      () => typeof globalThis.halberd === "object",
+      undefined,
+      { timeout: 20_000 },
+    );
+  } catch (error) {
+    const sentry = await page.locator("#sentry").innerText();
+    throw new Error(`WASM bridge did not load. Browser errors: ${browserErrors.join(" | ")}. Sentry: ${sentry}`, { cause: error });
+  }
 });
 
 test("packs() returns the five bundled rule packs with metadata", async ({

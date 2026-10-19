@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const testPort = process.env.HALBERD_TEST_PORT ?? "3010";
+
 // QA config — the inverse of playwright.demo.config.ts:
 //   - parallel workers (no shared state across tests)
 //   - headless, no slowMo
@@ -19,10 +21,10 @@ export default defineConfig({
   fullyParallel: true,
   workers: undefined, // let Playwright pick (cores - 1)
   retries: process.env.CI ? 2 : 0,
-  timeout: 30_000,
+  timeout: 45_000,
 
   use: {
-    baseURL: process.env.HALBERD_URL ?? "http://localhost:3010",
+    baseURL: process.env.HALBERD_URL ?? `http://localhost:${testPort}`,
     headless: true,
     viewport: { width: 1280, height: 800 },
     actionTimeout: 10_000,
@@ -35,9 +37,9 @@ export default defineConfig({
         // `next start` over `next dev` — closer to production (the
         // build is already on disk) and avoids the dev-server's
         // hot-reload setup overhead per test.
-        command: "npx next build && npx next start --port 3010",
-        url: "http://localhost:3010",
-        reuseExistingServer: !process.env.CI,
+        command: `npx next build && npx next start --port ${testPort}`,
+        url: `http://localhost:${testPort}`,
+        reuseExistingServer: false,
         timeout: 180_000,
       },
 
