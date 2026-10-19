@@ -56,9 +56,13 @@ These decisions come from the configured rules. Halberd does not create an opera
   <img src="assets/playground-hero.png" alt="Halberd's playground showing a DROP TABLE request blocked with a red wax-seal verdict and the violation detail" width="100%">
 </a>
 
-Every challenge resolves to one of three verdicts, pressed in wax by the sentry:
+Every challenge resolves to one of three protocol verdicts:
 
-![The three verdicts: refused (red wax, crossed halberds), pass granted (brass, halberd silhouette), and amended (blue ink, quill nib)](assets/wax-seals.png)
+| Verdict | Disposition | Client response |
+| --- | --- | --- |
+| **Refused** | Blocked | Synthetic JSON-RPC error (`-32000`) before reaching upstream |
+| **Pass granted** | Allowed | Request forwarded to upstream tool server unchanged |
+| **Amended** | Sanitized | Response rewritten to redact secrets and strip control characters |
 
 ### See it in motion
 
