@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 )
@@ -36,4 +38,26 @@ func TestOpenAuditSink(t *testing.T) {
 			t.Fatal("expected error for nonexistent directory")
 		}
 	})
+}
+
+func TestLocalHostOnly(t *testing.T) {
+	h := localHostOnly(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	for _, tc := range []struct {
+		host string
+		want int
+	}{
+		{"127.0.0.1:9090", http.StatusNoContent},
+		{"localhost:9090", http.StatusNoContent},
+		{"[::1]:9090", http.StatusNoContent},
+		{"attacker.example:9090", http.StatusForbidden},
+	} {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "http://"+tc.host+"/", nil)
+		h.ServeHTTP(w, r)
+		if w.Code != tc.want {
+			t.Errorf("host %q status=%d, want %d", tc.host, w.Code, tc.want)
+		}
+	}
 }

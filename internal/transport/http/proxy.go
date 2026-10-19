@@ -6,7 +6,9 @@
 package http
 
 import (
+	"bufio"
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"io"
@@ -47,10 +49,32 @@ func NewHandler(target *url.URL, engine *policy.Engine, bus *audit.Bus) http.Han
 
 	if engine.HasResponseFilters() {
 		proxy.ModifyResponse = func(resp *http.Response) error {
-			// SSE responses stream multiple JSON-RPC messages and can't be
-			// safely buffered as a whole. v0.1 of response inspection skips
-			// them; the v0.2 roadmap adds per-event inspection.
-			if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/event-stream") {
+			switch resp.Header.Get("Content-Encoding") {
+			case "", "identity":
+			case "gzip":
+				compressed := resp.Body
+				reader, err := gzip.NewReader(compressed)
+				if err != nil {
+					return err
+				}
+				resp.Body = &gzipBody{Reader: reader, compressed: compressed}
+				resp.Header.Del("Content-Encoding")
+			default:
+				return errors.New("unsupported upstream content encoding")
+			}
+			if strings.HasPrefix(strings.ToLower(resp.Header.Get("Content-Type")), "text/event-stream") {
+				reader, writer := io.Pipe()
+				body := resp.Body
+				go func() {
+					err := inspectSSE(writer, body, engine, bus)
+					_ = body.Close()
+					_ = writer.CloseWithError(err)
+				}()
+				resp.Body = reader
+				resp.ContentLength = -1
+				resp.Header.Del("Content-Length")
+				resp.Header.Del("ETag")
+				resp.Header.Del("Content-MD5")
 				return nil
 			}
 			body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
@@ -75,11 +99,17 @@ func NewHandler(target *url.URL, engine *policy.Engine, bus *audit.Bus) http.Han
 			resp.Body = io.NopCloser(bytes.NewReader(payload))
 			resp.ContentLength = int64(len(payload))
 			resp.Header.Set("Content-Length", strconv.Itoa(len(payload)))
+			resp.Header.Del("ETag")
+			resp.Header.Del("Content-MD5")
 			return nil
 		}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if origin := r.Header.Get("Origin"); origin != "" && !sameOrigin(origin, r) {
+			http.Error(w, "forbidden origin", http.StatusForbidden)
+			return
+		}
 		if r.Method != http.MethodPost {
 			proxy.ServeHTTP(w, r)
 			return
@@ -117,6 +147,89 @@ func NewHandler(target *url.URL, engine *policy.Engine, bus *audit.Bus) http.Han
 		r.ContentLength = int64(len(body))
 		proxy.ServeHTTP(w, r)
 	})
+}
+
+type gzipBody struct {
+	*gzip.Reader
+	compressed io.ReadCloser
+}
+
+func (b *gzipBody) Close() error {
+	_ = b.Reader.Close()
+	return b.compressed.Close()
+}
+
+func sameOrigin(origin string, r *http.Request) bool {
+	u, err := url.Parse(origin)
+	if err != nil || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || u.Scheme != "http" && u.Scheme != "https" {
+		return false
+	}
+	if !strings.EqualFold(u.Host, r.Host) {
+		return false
+	}
+	return (r.TLS != nil && u.Scheme == "https") || (r.TLS == nil && u.Scheme == "http")
+}
+
+func inspectSSE(w io.Writer, body io.Reader, engine *policy.Engine, bus *audit.Bus) error {
+	scanner := bufio.NewScanner(body)
+	scanner.Buffer(make([]byte, 64<<10), maxResponseBytes+1)
+	var event bytes.Buffer
+	var data []string
+	flush := func() error {
+		if len(data) == 0 {
+			_, err := w.Write(event.Bytes())
+			return err
+		}
+		payload := []byte(strings.Join(data, "\n"))
+		if !json.Valid(payload) {
+			return errors.New("invalid JSON in upstream event")
+		}
+		result := engine.EvaluateResponse(payload)
+		if len(result.Detections) > 0 {
+			detBytes, _ := json.Marshal(result.Detections)
+			bus.Record(audit.Event{Direction: "response", Violations: detBytes})
+		}
+		if !result.Modified {
+			_, err := w.Write(event.Bytes())
+			return err
+		}
+		for _, line := range strings.Split(strings.TrimSuffix(event.String(), "\n\n"), "\n") {
+			if strings.HasPrefix(line, "data:") {
+				continue
+			}
+			if _, err := io.WriteString(w, line+"\n"); err != nil {
+				return err
+			}
+		}
+		_, err := io.WriteString(w, "data: "+string(result.Payload)+"\n\n")
+		return err
+	}
+	for scanner.Scan() {
+		line := strings.TrimSuffix(scanner.Text(), "\r")
+		if event.Len()+len(line)+1 > maxResponseBytes {
+			return errors.New("upstream event exceeds size limit")
+		}
+		event.WriteString(line)
+		event.WriteByte('\n')
+		if line == "" {
+			if err := flush(); err != nil {
+				return err
+			}
+			event.Reset()
+			data = nil
+			continue
+		}
+		if strings.HasPrefix(line, "data:") {
+			data = append(data, strings.TrimPrefix(strings.TrimPrefix(line, "data:"), " "))
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	if event.Len() > 0 {
+		return errors.New("incomplete upstream event")
+	}
+	return nil
 }
 
 func writePolicyViolation(w http.ResponseWriter, requestBody []byte, d policy.Decision) {

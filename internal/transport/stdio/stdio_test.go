@@ -176,6 +176,25 @@ func TestWrap_ForwardsAllowed(t *testing.T) {
 	}
 }
 
+func TestWrap_ChildExitClosesHostInput(t *testing.T) {
+	r := newRig(t)
+	defer r.cancel()
+	defer func() { _ = r.bus.Stop(context.Background()) }()
+	defer func() { _ = r.hostIn.Close() }()
+	defer func() { _ = r.hostOutPipe.Close() }()
+
+	_ = r.childStdout.Close()
+	_ = r.childStderr.Close()
+	select {
+	case err := <-r.wrapDone:
+		if err != nil {
+			t.Fatalf("Wrap returned %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Wrap remained blocked on open host input after child exit")
+	}
+}
+
 func TestWrap_BlocksRequestWithSyntheticError(t *testing.T) {
 	r := newRig(t)
 	defer r.close(t)

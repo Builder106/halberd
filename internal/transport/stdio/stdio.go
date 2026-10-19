@@ -72,6 +72,8 @@ func Wrap(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host HostS
 
 	var wg sync.WaitGroup
 	wg.Add(3)
+	var childWG sync.WaitGroup
+	childWG.Add(2)
 
 	// host stdin -> policy -> child stdin
 	go func() {
@@ -131,6 +133,7 @@ func Wrap(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host HostS
 	// child stdout -> response inspection -> host stdout
 	go func() {
 		defer wg.Done()
+		defer childWG.Done()
 		sc := bufio.NewScanner(child.Stdout)
 		sc.Buffer(make([]byte, 64<<10), MaxLineBytes)
 		inspectResponses := engine.HasResponseFilters()
@@ -168,6 +171,7 @@ func Wrap(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host HostS
 	// reach whatever console the host shows the user)
 	go func() {
 		defer wg.Done()
+		defer childWG.Done()
 		if _, err := io.Copy(host.Err, child.Stderr); err != nil {
 			slog.Debug("child stderr copy ended", "err", err)
 		}
@@ -178,9 +182,18 @@ func Wrap(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host HostS
 		wg.Wait()
 		close(done)
 	}()
+	childDone := make(chan struct{})
+	go func() {
+		childWG.Wait()
+		close(childDone)
+	}()
 
 	select {
 	case <-done:
+		return nil
+	case <-childDone:
+		closeReader(host.In)
+		<-done
 		return nil
 	case <-ctx.Done():
 		closeReader(host.In)

@@ -9,10 +9,12 @@ import (
 	"errors"
 	"flag"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -25,7 +27,7 @@ func main() {
 	var (
 		policyPath = flag.String("policy", "halberd.yaml", "path to policy bundle")
 		target     = flag.String("target", "", "upstream MCP server URL (e.g. http://localhost:8080)")
-		listen     = flag.String("listen", ":9090", "bind address")
+		listen     = flag.String("listen", "127.0.0.1:9090", "bind address")
 		auditPath  = flag.String("audit", "-", `audit log path ("-" for stderr)`)
 	)
 	flag.Parse()
@@ -57,6 +59,9 @@ func main() {
 	bus := audit.NewBus(auditSink, 4096)
 	engine := policy.New(bundle)
 	handler := httpx.NewHandler(targetURL, engine, bus)
+	if host, _, err := net.SplitHostPort(*listen); err == nil && isLoopbackHost(host) {
+		handler = localHostOnly(handler)
+	}
 
 	srv := &http.Server{
 		Addr:              *listen,
@@ -91,6 +96,24 @@ func main() {
 	if dropped := bus.Dropped(); dropped > 0 {
 		slog.Warn("audit events dropped under load", "count", dropped)
 	}
+}
+
+func localHostOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !isLoopbackHost((&url.URL{Host: r.Host}).Hostname()) {
+			http.Error(w, "forbidden host", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func isLoopbackHost(host string) bool {
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
 }
 
 func openAuditSink(path string) (sink *os.File, closer func(), err error) {

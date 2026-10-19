@@ -1,7 +1,9 @@
 package http
 
 import (
+	"bufio"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"io"
@@ -11,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Builder106/halberd/internal/audit"
 	"github.com/Builder106/halberd/internal/jsonrpc"
@@ -271,10 +274,10 @@ func TestProxy_MalformedJSON(t *testing.T) {
 	}
 }
 
-func TestProxy_SSEResponsePassthrough(t *testing.T) {
+func TestProxy_InspectsSSEResponse(t *testing.T) {
 	upstream := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
-		_, _ = w.Write([]byte("data: test stream\n\n"))
+		_, _ = w.Write([]byte("id: 1\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"text\":\"AKIAIOSFODNN7EXAMPLE\"}}\n\n"))
 	})
 	srv := httptest.NewServer(upstream)
 	defer srv.Close()
@@ -293,8 +296,135 @@ func TestProxy_SSEResponsePassthrough(t *testing.T) {
 	r := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
 	h.ServeHTTP(w, r)
 
-	if !strings.Contains(w.Body.String(), "data: test stream") {
-		t.Fatalf("expected SSE stream passthrough, got %s", w.Body.String())
+	if strings.Contains(w.Body.String(), "AKIAIOSFODNN7EXAMPLE") || !strings.Contains(w.Body.String(), "[REDACTED]") || !strings.Contains(w.Body.String(), "id: 1") {
+		t.Fatalf("expected inspected SSE event, got %s", w.Body.String())
+	}
+}
+
+func TestInspectSSE_RejectsInvalidEventWithoutForwarding(t *testing.T) {
+	bundle, err := policy.ParseBundle([]byte(responseFilterBundle))
+	if err != nil {
+		t.Fatal(err)
+	}
+	bus := audit.NewBus(&bytes.Buffer{}, 16)
+	defer func() { _ = bus.Stop(context.Background()) }()
+	var out bytes.Buffer
+	err = inspectSSE(&out, strings.NewReader("data: private but not JSON\n\n"), policy.New(bundle), bus)
+	if err == nil || out.Len() != 0 {
+		t.Fatalf("invalid event forwarded: err=%v body=%q", err, out.String())
+	}
+}
+
+func TestProxy_SSEForwardsInspectedEventBeforeStreamEnds(t *testing.T) {
+	release := make(chan struct{})
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = io.WriteString(w, "data: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"text\":\"AKIAIOSFODNN7EXAMPLE\"}}\n\n")
+		w.(http.Flusher).Flush()
+		<-release
+	}))
+	defer upstream.Close()
+	u, _ := url.Parse(upstream.URL)
+	bundle, _ := policy.ParseBundle([]byte(responseFilterBundle))
+	bus := audit.NewBus(&bytes.Buffer{}, 16)
+	defer func() { _ = bus.Stop(context.Background()) }()
+	proxy := httptest.NewServer(NewHandler(u, policy.New(bundle), bus))
+	defer proxy.Close()
+	defer close(release)
+
+	resp, err := http.Post(proxy.URL, "application/json", strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"ping"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	line := make(chan string, 1)
+	go func() {
+		got, _ := bufio.NewReader(resp.Body).ReadString('\n')
+		line <- got
+	}()
+	select {
+	case got := <-line:
+		if !strings.Contains(got, "[REDACTED]") || strings.Contains(got, "AKIAIOSFODNN7EXAMPLE") {
+			t.Fatalf("uninspected event: %q", got)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("inspected event was buffered until stream ended")
+	}
+}
+
+func TestProxy_GzipResponseInspected(t *testing.T) {
+	upstream := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Encoding", "gzip")
+		zw := gzip.NewWriter(w)
+		_, _ = zw.Write([]byte(`{"jsonrpc":"2.0","id":1,"result":{"text":"AKIAIOSFODNN7EXAMPLE"}}`))
+		_ = zw.Close()
+	})
+	srv := httptest.NewServer(upstream)
+	defer srv.Close()
+	u, _ := url.Parse(srv.URL)
+	bundle, _ := policy.ParseBundle([]byte(responseFilterBundle))
+	bus := audit.NewBus(&bytes.Buffer{}, 16)
+	defer func() { _ = bus.Stop(context.Background()) }()
+	h := NewHandler(u, policy.New(bundle), bus)
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"ping"}`))
+	r.Header.Set("Accept-Encoding", "gzip")
+	h.ServeHTTP(w, r)
+	if w.Code != http.StatusOK || strings.Contains(w.Body.String(), "AKIAIOSFODNN7EXAMPLE") || !strings.Contains(w.Body.String(), "[REDACTED]") {
+		t.Fatalf("compressed response bypassed filter: status=%d body=%s", w.Code, w.Body.String())
+	}
+	if w.Header().Get("Content-Encoding") != "" {
+		t.Fatal("stale Content-Encoding on inspected body")
+	}
+}
+
+func TestProxy_UnsupportedEncodingFailsClosed(t *testing.T) {
+	upstream := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Encoding", "br")
+		_, _ = w.Write([]byte("private"))
+	})
+	srv := httptest.NewServer(upstream)
+	defer srv.Close()
+	u, _ := url.Parse(srv.URL)
+	bundle, _ := policy.ParseBundle([]byte(responseFilterBundle))
+	bus := audit.NewBus(&bytes.Buffer{}, 16)
+	defer func() { _ = bus.Stop(context.Background()) }()
+	h := NewHandler(u, policy.New(bundle), bus)
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/", nil))
+	if w.Code != http.StatusBadGateway || strings.Contains(w.Body.String(), "private") {
+		t.Fatalf("unsupported encoding leaked: status=%d body=%s", w.Code, w.Body.String())
+	}
+}
+
+func TestProxy_RejectsCrossOrigin(t *testing.T) {
+	h, _, cleanup := newTestProxy(t, http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer cleanup()
+	for _, origin := range []string{"https://attacker.example", "null", "http://attacker.example:9090"} {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:9090/", nil)
+		r.Header.Set("Origin", origin)
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusForbidden {
+			t.Errorf("origin %q status=%d, want 403", origin, w.Code)
+		}
+	}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "http://127.0.0.1:9090/", nil)
+	r.Header.Set("Origin", "http://127.0.0.1:9090")
+	h.ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("same local origin status=%d, want 200", w.Code)
+	}
+	w = httptest.NewRecorder()
+	r = httptest.NewRequest(http.MethodGet, "https://proxy.example.com/", nil)
+	r.Header.Set("Origin", "https://proxy.example.com")
+	h.ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("same remote origin status=%d, want 200", w.Code)
 	}
 }
 
