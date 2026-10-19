@@ -4,15 +4,15 @@ This document describes the high-performance JSON-RPC firewall architecture, Web
 
 ## Threat Matrix & Mitigation Coverage
 
-Halberd acts as a reverse proxy sitting between an LLM agent and Model Context Protocol (MCP) tool servers. It defends against five core threats:
+Halberd sits between an LLM agent and Model Context Protocol (MCP) tool servers. The table separates current checks from work that remains planned:
 
 | Threat ID | Threat Category | Attack Vector | Halberd Mitigation |
 | --- | --- | --- | --- |
-| **T1** | Tool Poisoning | Compromised tool responses returning role-tag spoofing or prompt injection | Response payload scanning and sanitization |
-| **T2** | Argument Injection | Hostile parameters in valid tool calls (e.g. `DROP TABLE`, `rm -rf`) | `deny_pattern` regex and AST ruleset matching |
-| **T3** | Out-of-Scope I/O | Tools attempting unapproved network calls or file traversal | Network CIDR filtering and path canonicalization |
+| **T1** | Tool Poisoning | Compromised tool responses returning role-tag spoofing or prompt injection | Selected ANSI and zero-width characters are stripped from JSON-RPC results; prompt injection itself is not detected |
+| **T2** | Argument Injection | Hostile parameters in valid tool calls (e.g. `DROP TABLE`, `rm -rf`) | Configured regex, allowlist, length, and type checks; no SQL or shell parser |
+| **T3** | Out-of-Scope I/O | Tools attempting unapproved network calls or file traversal | Planned; bundles can deny specific argument patterns but do not sandbox I/O |
 | **T4** | Capability Creep | Unvetted tools appearing mid-session via dynamic tool registration | Strict tool name whitelisting in policy packs |
-| **T5** | Secret Exfiltration | Tool responses carrying secrets (AWS keys, GitHub tokens, RSA keys) | Pattern-based secret striking with `[REDACTED]` substitution |
+| **T5** | Secret Exfiltration | Tool responses carrying secrets (AWS keys, GitHub tokens, private keys) | Opt-in pattern redaction in JSON-RPC result strings; unknown formats are not caught |
 
 ## Request Lifecycle & Verdict Engine
 
@@ -29,13 +29,13 @@ sequenceDiagram
     Firewall->>Policy: EvaluateRequest(payload, policyPack)
     alt Rule Violation (T2 / T4)
         Policy-->>Firewall: Verdict: Refused (Red Seal)
-        Firewall-->>Agent: Synthetic JSON-RPC Error (-32600)
+        Firewall-->>Agent: Synthetic JSON-RPC Error (-32000)
     else Policy Allowed
         Policy-->>Firewall: Verdict: Pass Granted (Brass Seal)
         Firewall->>Server: Forward Request
         Server-->>Firewall: Tool Response
         Firewall->>Policy: EvaluateResponse(responsePayload)
-        alt Secret Detected (T1 / T5)
+        alt Configured filter matches
             Policy-->>Firewall: Verdict: Amended (Blue Ink Seal)
             Firewall-->>Agent: Redacted Response ([REDACTED])
         else Clean Response
@@ -52,4 +52,4 @@ sequenceDiagram
 
 ## WebAssembly Bridge (`cmd/halberd-wasm`)
 
-The core Go policy engine in `internal/policy`is compiled to WebAssembly via Go's`js/wasm`architecture target. The browser playground imports`halberd.wasm` directly, executing zero-latency policy decisions inside client JavaScript without hitting a backend API server.
+The Go policy engine in `internal/policy` is also compiled to WebAssembly with Go's `js/wasm` target. The browser playground runs policy decisions locally, without a backend policy request.

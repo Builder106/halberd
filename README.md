@@ -1,24 +1,56 @@
 <picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/banner-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="assets/banner-mobile-light.svg">
   <source media="(prefers-color-scheme: dark)"  srcset="assets/banner-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.svg">
-  <img alt="Halberd: A security guard for AI assistants" src="assets/banner-dark.svg">
+  <img alt="Halberd: A guard for AI tools" src="assets/banner-light.svg" width="1200">
 </picture>
 
 [![CI](https://github.com/Builder106/halberd/actions/workflows/ci.yml/badge.svg)](https://github.com/Builder106/halberd/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/go-1.22%2B-00ADD8.svg)](https://go.dev/)
+[![Go](https://img.shields.io/badge/go-1.26%2B-00ADD8.svg)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 [![MCP](https://img.shields.io/badge/MCP-2025--06-7C4DFF.svg)](https://modelcontextprotocol.io)
 [![Demo](https://img.shields.io/badge/demo-live-success.svg)](https://halberd-keep.vercel.app)
 
-> **A security guard for AI assistants.** Halberd checks every tool an AI tries to use, preventing data leaks and blocking unauthorized commands before they execute.
+> **Useful access, with limits you choose.** Halberd checks an AI assistant's tool requests against your policies before letting them through.
 
-## 💡 What is Halberd?
+## What is Halberd?
 
-When you give an AI assistant access to your computer, files, or database, you want to be sure it only does what you asked. Halberd acts like an airport security checkpoint between the AI model and your local machine. It inspects every tool request in real time and blocks dangerous or unapproved actions before they reach your system.
+You ask an AI assistant to look up ten student records. So far, so useful. But the same database tool can receive a command to erase an entire table. Who checks which request gets through?
 
-**Halberd** operates as a high-throughput reverse proxy between an LLM agent and its Model Context Protocol (MCP) servers. Every `tools/call` envelope is parsed, evaluated against a YAML policy bundle, and either forwarded or blocked with a synthetic JSON-RPC error before any malicious payload reaches the host system.
+Halberd sits between the assistant and its connected tools. You choose the rules: which tools are permitted, which commands are forbidden, and which sensitive values should be removed from responses. Halberd applies those rules as requests and responses pass through it.
 
-> **Try it in the browser:** [halberd-keep.vercel.app](https://halberd-keep.vercel.app) (the real `internal/policy` engine compiled to WebAssembly). Pick a rule pack, paste a `tools/call`, and see the decision live.
+## One tool, two outcomes
+
+Here are two requests checked against the same bundled PostgreSQL policy. The lookup passes. The erase command stops before it reaches the database tool.
+
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/diagrams/policy-check-mobile-dark.png">
+  <source media="(max-width: 600px)" srcset="assets/diagrams/policy-check-mobile-light.png">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/policy-check-dark.png">
+  <img src="assets/diagrams/policy-check-light.png" alt="Halberd forwards a request to read ten records and refuses a request to erase the students table before it reaches the database tool." width="960">
+</picture>
+
+`SELECT id, name FROM students LIMIT 10` reaches the database tool unchanged. `DROP TABLE students` matches a forbidden-command pattern, so the assistant receives an error instead. Both decisions are sent to the audit bus for recording.
+
+<details>
+<summary><strong>Developer details</strong></summary>
+
+Halberd is a reverse proxy for the Model Context Protocol (MCP), the protocol AI assistants use to call connected tools. It supports HTTP and local stdio transports.
+
+- The [PostgreSQL bundle](policies/mcp-server-postgres.yaml) declares the `query` tool, a string-valued `sql` argument, an 8,192-byte limit, and forbidden SQL patterns.
+- The [policy engine](internal/policy/engine.go) checks the tool and arguments. A matched pattern produces a `deny_pattern` violation.
+- The [HTTP proxy](internal/transport/http/proxy.go) records the decision, then either forwards the request body unchanged or returns JSON-RPC error `-32000` to the assistant. That protocol error travels inside an HTTP `200` response.
+- Response filtering is a separate step. Configured filters remove escape sequences and redact recognized secret patterns in JSON-RPC results, including HTTP event streams.
+
+These decisions come from the configured rules. Halberd does not create an operating-system sandbox. See the [firewall architecture](docs/FIREWALL_ARCHITECTURE.md) for the enforcement boundaries and the [policy DSL](docs/policy-dsl.md) to write your own rules.
+
+</details>
+
+**Try the same requests:** [Open the playground](https://halberd-keep.vercel.app), choose the PostgreSQL pack, and compare the two queries. The playground runs the real Go policy engine compiled to WebAssembly, so you can inspect a decision without installing the proxy.
+
+<details>
+<summary><strong>Watch it work</strong></summary>
 
 <a href="https://halberd-keep.vercel.app">
   <img src="assets/playground-hero.png" alt="Halberd's playground showing a DROP TABLE request blocked with a red wax-seal verdict and the violation detail" width="100%">
@@ -34,7 +66,7 @@ A `DROP TABLE` under the postgres bundle, refused with a red wax seal:
 
 ![Halberd refusing a DROP TABLE under the mcp-server-postgres bundle: a red wax seal is pressed and the deny_pattern violation is surfaced](assets/demo/refused-drop-table.gif)
 
-<sub>Recorded against the live site by the <a href="web/e2e/demo/">Gherkin demo suite</a>. Re-record locally with <code>cd web && npm run demo</code>. Higher-quality H.264 mp4 alongside each clip: <a href="assets/demo/refused-drop-table.mp4">refused-drop-table.mp4</a>.</sub>
+<sub><a href="assets/demo/refused-drop-table.mp4">Watch the MP4 version</a>.</sub>
 
 <details>
 <summary><strong>⚔ Refused:</strong> path traversal attempt blocked under filesystem rules</summary>
@@ -63,11 +95,11 @@ A `DROP TABLE` under the postgres bundle, refused with a red wax seal:
 
 </details>
 
-> *Standard scanners check what tools **claim** they do. Halberd inspects what they **actually attempt** in production.*
+</details>
 
 ## Why this exists
 
-The primary security vulnerability in AI systems is often not the AI model itself, but the tools and computer permissions granted to it. Halberd defends against five major risks:
+An assistant's tools can read files, run queries, and return data that influences its next action. These are the threats Halberd's policies address, including the I/O controls still on the roadmap:
 
 | # | Threat | What happens |
 | --- | --- | --- |
@@ -77,69 +109,29 @@ The primary security vulnerability in AI systems is often not the AI model itsel
 | T4 | Permission creep | A connected server silently introduces new, unvetted tools in the middle of an active session |
 | T5 | Secret exfiltration | A tool response accidentally leaks API keys, passwords, or encryption keys back to the AI model |
 
-v0.1 covers **T1**, **T2**, **T4**, and **T5**over both**HTTP** and
-**stdio** transports. T3 (out-of-scope I/O) is the v0.2 roadmap.
-
-## How it works
-
-```mermaid
-sequenceDiagram
-    participant Agent as LLM agent
-    participant Proxy as halberd-http
-    participant Engine as policy engine
-    participant Audit as audit bus
-    participant Server as MCP server
-
-    Agent->>Proxy: JSON-RPC tools/call (POST)
-    Proxy->>Engine: Evaluate(payload)
-    Engine-->>Proxy: Decision{blocked, violations}
-    Proxy->>Audit: Record(event) [non-blocking]
-    alt allowed
-        Proxy->>Server: forward request
-        Server-->>Proxy: result
-        Proxy-->>Agent: result
-    else blocked
-        Proxy-->>Agent: JSON-RPC error -32000 (policy violation)
-    end
-```
+Halberd checks configured T2 rules, denies undeclared tools (T4), and can strip control characters and recognized secrets from tool results (parts of T1 and T5). It does not detect general prompt injection, enforce a filesystem or network sandbox (T3), or guarantee that every secret format is recognized.
 
 ## Install
 
-**Pre-built binaries** for linux/darwin × amd64/arm64 ship with every
-release. Grab the archive matching your platform from the [latest
-release](https://github.com/Builder106/halberd/releases/latest); each
-tarball bundles all four binaries plus `LICENSE`, `README.md`,
-`CONTRIBUTING.md`, the example bundle, and every rule pack.
+There is no published binary release yet. To try Halberd, install Go 1.26 or later and build from source:
 
 ```bash
-curl -L https://github.com/Builder106/halberd/releases/latest/download/halberd_${VERSION}_${OS}_${ARCH}.tar.gz \
-  | tar -xz
-./halberd version
-```
-
-**Build from source:**
-
-```bash
-brew install go
 git clone https://github.com/Builder106/halberd && cd halberd
 go build -o bin/ ./cmd/...
-
-# Validate a policy bundle
-
 ./bin/halberd lint policies/mcp-server-postgres.yaml
 ```
 
 ## Bundled rule packs
 
-| Pack | Threats covered | Note |
+| Pack | Checks | Note |
 | --- | --- | --- |
-| [`mcp-server-postgres.yaml`](policies/mcp-server-postgres.yaml) | T2 (DROP/TRUNCATE/COPY-from-program/`pg_read_server_files`), T5 (secrets in result rows) | Ready to use as-is |
-| [`mcp-server-filesystem.yaml`](policies/mcp-server-filesystem.yaml) | T2 (path traversal, absolute paths, home-dir expansion, null-byte injection), T5 (secrets in file contents) | Array-arg tools (`read_multiple_files`, `edit_file`) intentionally denied — v0.1 DSL is scalar-only |
+| [`mcp-server-postgres.yaml`](policies/mcp-server-postgres.yaml) | Denies listed SQL patterns and scans results for recognized secrets | Review it against your database permissions; it is not a read-only SQL policy |
+| [`mcp-server-filesystem.yaml`](policies/mcp-server-filesystem.yaml) | Denies listed path patterns and scans returned text for recognized secrets | Array-arg tools (`read_multiple_files`, `edit_file`) are denied; the rules do not resolve symlinks or enforce a filesystem root |
 | [`mcp-server-git.yaml`](policies/mcp-server-git.yaml) | T2 (`--upload-pack=…`-style long-opt smuggling in ref/branch names; path traversal in `repo_path`), T5 | State-mutating tools (`commit`, `add`, `reset`, `init`) denied by default |
-| [`mcp-server-github.yaml`](policies/mcp-server-github.yaml) | T3 (owner-outside-allowlist; **edit `your-org` before deploying**), T2 (repo-name shell metacharacters), T5 | Truly dangerous tools (`delete_repository`, `transfer_repository`) omitted entirely |
-| [`halberd-honeypot.yaml`](policies/halberd-honeypot.yaml) | T1, T2, T3, T5 (the full v0.1 surface) | Matched bundle for [`cmd/halberd-honeypot`](cmd/halberd-honeypot/); demo-only |
+| [`mcp-server-github.yaml`](policies/mcp-server-github.yaml) | Checks configured owner values, repo-name patterns, and response secrets | **Edit `your-org` before use.** Destructive tools such as `delete_repository` and `transfer_repository` are not listed |
+| [`halberd-honeypot.yaml`](policies/halberd-honeypot.yaml) | Demo cases for denied inputs and secret redaction | Matched bundle for [`cmd/halberd-honeypot`](cmd/halberd-honeypot/); demo-only |
 
-### Try the full v0.1 surface against the honeypot
+### Try it against the honeypot
 
 Halberd ships with a deliberately-vulnerable MCP server,
 [`cmd/halberd-honeypot`](cmd/halberd-honeypot/), whose tool outputs
@@ -155,7 +147,7 @@ bin/halberd-stdio \
   -- bin/halberd-honeypot
 ```
 
-Pipe in a `tools/call`for`execute_sql`with`DROP TABLE`, or `read_file`
+Pipe in a `tools/call` for `execute_sql` with `DROP TABLE`, or `read_file`
 with `../../etc/passwd`, or `list_users` (the response carries fake
 AWS / GitHub / RSA secrets) — and watch Halberd block, redact, and audit
 each one. See [`cmd/halberd-honeypot/README.md`](cmd/halberd-honeypot/README.md)
@@ -166,7 +158,7 @@ for the full threat-coverage table.
 
 ![Halberd wrapping the honeypot: a DROP TABLE request is blocked with -32000, a list_users response has its embedded AWS/GitHub/RSA secrets redacted, and the audit log captures both decisions](assets/honeypot-demo.gif)
 
-<sub>The cast is scripted under <a href="scripts/demo/honeypot-demo.sh">scripts/demo/honeypot-demo.sh</a> and re-recorded via <code>asciinema rec --command ./scripts/demo/honeypot-demo.sh assets/honeypot-demo.cast</code> + <code>agg --theme github-dark</code>. mp4: <a href="assets/honeypot-demo.mp4">honeypot-demo.mp4</a></sub>
+<sub><a href="assets/honeypot-demo.mp4">Watch the MP4 version</a>.</sub>
 
 </details>
 
@@ -176,13 +168,16 @@ for the full threat-coverage table.
 ./bin/halberd-http \
   --policy policies/mcp-server-postgres.yaml \
   --target http://localhost:8080 \
-  --listen :9090 \
+  --listen 127.0.0.1:9090 \
   --audit  halberd.jsonl
 ```
 
-Point your MCP client at `http://localhost:9090` instead of the postgres
-server. Every `tools/call`is logged. Try a`DROP TABLE` — Halberd
+Point your MCP client at `http://127.0.0.1:9090` instead of the postgres
+server. Halberd queues each `tools/call` decision for the audit log and
+reports dropped events if the queue fills. Try a `DROP TABLE` — Halberd
 returns a JSON-RPC error before the request reaches postgres.
+
+The listener binds to loopback by default. Requests carrying a cross-origin `Origin` header are rejected. If you bind it to a network interface, protect access at the network boundary; Halberd has no client authentication.
 
 ### Option B — local stdio server (Claude Desktop, Cursor, Windsurf)
 
@@ -241,24 +236,15 @@ Full reference: [docs/policy-dsl.md](docs/policy-dsl.md).
 
 | Phase | Status | Outcome |
 | --- | --- | --- |
-| **P1** — HTTP reverse proxy + audit bus | shipped in v0.1 | `halberd-http` forwards JSON-RPC, logs every decision |
-| **P2** — Policy engine, deny-pattern blocking, T2 + T4 coverage | shipped in v0.1 | YAML bundles, regex denylist, capability-creep guard |
-| **P3** — stdio transport | shipped in v0.1 | `halberd-stdio` MITMs local MCP servers (Claude Desktop, Cursor, Windsurf) over line-delimited JSON-RPC |
-| **P4** — Response inspection | shipped in v0.1 | JSON-tree walk on every response: strip ANSI / zero-width Unicode, redact AWS / GitHub / RSA secrets. T1 + T5 coverage. (SSE per-event inspection on v0.2 roadmap.) |
-| **P5** — Rule packs + hardening | shipped in v0.1 | Pre-built bundles for `mcp-server-{filesystem,git,github,postgres}`; per-pack threat tests; audit-bus coverage closed; CI actions bumped to Node-24-native versions. |
+| **P1** — HTTP reverse proxy + audit bus | implemented | `halberd-http` forwards JSON-RPC and logs request decisions |
+| **P2** — Policy engine, deny-pattern blocking, T2 + T4 coverage | implemented | YAML bundles, regex denylist, unknown-tool guard |
+| **P3** — stdio transport | implemented | `halberd-stdio` wraps local MCP servers over line-delimited JSON-RPC |
+| **P4** — Response inspection | implemented | Inspect JSON-RPC result strings, including SSE events; strip selected control characters and redact recognized AWS, GitHub, and private-key formats |
+| **P5** — Rule packs + hardening | implemented | Bundles for `mcp-server-{filesystem,git,github,postgres}` and per-pack tests |
 
 ## Performance
 
-The policy engine is the hot path. Targets enforced in CI:
-
-| Metric | Ceiling |
-| --- | --- |
-| p50 added latency per `tools/call` | 200 µs |
-| p99 added latency | 1 ms |
-| Allocations per call | 50 |
-| Throughput (4-core proxy instance) | 50k req/s |
-
-Reproduce locally with `go test -bench=. -benchmem ./internal/policy`.
+CI records policy-engine benchmarks, but does not enforce a latency or throughput limit. Run `go test -bench=. -benchmem ./internal/policy` to measure your build and hardware.
 
 ## Architecture
 
@@ -292,12 +278,6 @@ Reproduce locally with `go test -bench=. -benchmem ./internal/policy`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). The "out of scope" list near the
 bottom is worth reading before opening a PR.
-
-## Branding assets
-
-- [`assets/banner-{dark,light}.svg`](assets/) — README banner (1200×420), light/dark variants swapped via `<picture>`.
-- [`assets/social-preview.svg`](assets/social-preview.svg) + [`.png`](assets/social-preview.png) — 1200×630 social-preview card. Upload the PNG via **Settings → Social preview → Upload an image** to populate GitHub's link-share card.
-- [`assets/favicon.svg`](assets/favicon.svg) + [`assets/apple-touch-icon.png`](assets/apple-touch-icon.png) — favicon (designed for 32×32 legibility) and iOS home-screen icon (180×180 on solid background).
 
 ## License
 

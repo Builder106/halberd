@@ -39,14 +39,6 @@ export function Footer() {
           >
             journal
           </a>
-          <a
-            href="https://github.com/Builder106/halberd/releases"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-(--color-fg-2) transition"
-          >
-            releases
-          </a>
         </nav>
       </div>
     </footer>

@@ -42,8 +42,8 @@ export function Install() {
         Take these and stand a watch of your own.
       </p>
       <p className="text-(--color-fg-2) mb-12 max-w-2xl">
-        Pre-built binaries ship for linux and darwin × amd64 and arm64. Each
-        archive bundles all four binaries plus every rule pack.
+        There is no published binary release yet. Install Go 1.26 or later,
+        then build Halberd from source.
       </p>
 
       <div className="grid md:grid-cols-2 gap-8">
@@ -55,11 +55,13 @@ export function Install() {
             <span className="text-(--color-brass) mr-2" aria-hidden>
               ❦
             </span>
-            Download a release
+            Before you start
           </h3>
-          <CopyableBlock>{`curl -L https://github.com/Builder106/halberd/releases/latest/download/\\
-  halberd_\${VERSION}_\${OS}_\${ARCH}.tar.gz | tar -xz
-./halberd version`}</CopyableBlock>
+          <p className="text-sm text-(--color-fg-2)">
+            You need a local MCP server to put behind Halberd. Choose a
+            matching rule pack, review its limits, and point your client at
+            the proxy. The bundled honeypot lets you try it without a server.
+          </p>
         </div>
 
         <div>
@@ -72,8 +74,7 @@ export function Install() {
             </span>
             Build from source
           </h3>
-          <CopyableBlock>{`brew install go
-git clone https://github.com/Builder106/halberd && cd Halberd
+          <CopyableBlock>{`git clone https://github.com/Builder106/halberd && cd halberd
 go build -o bin/ ./cmd/...
 ./bin/halberd lint policies/mcp-server-postgres.yaml`}</CopyableBlock>
         </div>
@@ -118,11 +119,15 @@ go build -o bin/ ./cmd/...
           <p className="text-sm text-(--color-fg-3) mb-3">
             Sit between your agent and a remote MCP server:
           </p>
-          <CopyableBlock>{`halberd-http \\
+          <CopyableBlock>{`./bin/halberd-http \\
   --policy policies/mcp-server-postgres.yaml \\
   --target http://upstream:8080 \\
-  --listen :9090 \\
+  --listen 127.0.0.1:9090 \\
   --audit  halberd.jsonl`}</CopyableBlock>
+          <p className="text-sm text-(--color-fg-3) mt-3">
+            The HTTP listener has no client authentication. Keep it on
+            loopback unless you provide access control at the network boundary.
+          </p>
         </div>
       </div>
     </section>

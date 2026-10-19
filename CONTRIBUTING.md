@@ -19,7 +19,7 @@ To run the HTTP proxy against a remote MCP server:
 go build -o bin/halberd-http ./cmd/halberd-http
 ./bin/halberd-http --policy policies/mcp-server-postgres.yaml \
                    --target  http://localhost:8080 \
-                   --listen  :9090
+                   --listen  127.0.0.1:9090
 ```
 
 To wrap a local stdio MCP server (Claude Desktop / Cursor style):
@@ -46,10 +46,10 @@ for the threat-coverage table.
 
 ## Project-specific guardrails
 
-- **Latency is a feature.** The policy engine sits on every JSON-RPC request.
-
-  p50 added latency must stay below 200 µs and p99 below 1 ms on the bench
-  corpus. PRs that regress `BenchmarkEngine_*` are reverted.
+- **Measure policy latency.** The policy engine sits on every JSON-RPC request.
+  Run `go test -bench=. -benchmem ./internal/policy` for changes to the hot
+  path and compare the result with the benchmark output from CI. CI records
+  timings but does not enforce a latency threshold.
 
 - **No third-party dependencies without a strong reason.** Halberd currently
 
@@ -134,6 +134,40 @@ gh run watch
 Goreleaser injects the tag value as `main.version` at link time, so
 `halberd version`and the`halberd-honeypot` startup banner both report
 the actual release version. Snapshot builds report `<next>-next-<sha>`.
+
+## Maintaining visual assets
+
+The README uses [`assets/banner-dark.svg`](assets/banner-dark.svg) and
+[`assets/banner-light.svg`](assets/banner-light.svg), both 1200×420. Phone
+layouts are [`assets/banner-mobile-dark.svg`](assets/banner-mobile-dark.svg)
+and [`assets/banner-mobile-light.svg`](assets/banner-mobile-light.svg), both
+640×500. Its `<picture>` element selects the layout and color scheme.
+The Cormorant Garamond wordmark and Manrope caption are outlined, so the
+banners render without installed fonts or external requests. Edit these SVGs
+directly in a vector editor.
+
+The 1200×630 link-preview card has an editable
+[`SVG source`](assets/social-preview.svg) and a
+[`PNG export`](assets/social-preview.png). A repository administrator can
+upload the PNG through **Settings > Social preview > Upload an image**.
+
+[`assets/favicon.svg`](assets/favicon.svg) is designed for legibility at
+32×32. [`assets/apple-touch-icon.png`](assets/apple-touch-icon.png) is the
+180×180 iOS home-screen icon on a solid background. Instructions for editing
+and exporting the policy illustration are in
+[`assets/diagrams/README.md`](assets/diagrams/README.md).
+
+### Recording demos
+
+The playground recordings come from the
+[`Gherkin demo suite`](web/e2e/demo/). Run `cd web && npm run demo` to record
+them again. Each clip has a GIF and an H.264 MP4 in `assets/demo/`.
+
+The terminal demo uses
+[`scripts/demo/honeypot-demo.sh`](scripts/demo/honeypot-demo.sh). Record it
+with `asciinema rec --command ./scripts/demo/honeypot-demo.sh assets/honeypot-demo.cast`,
+then export the GIF with
+`agg --theme github-dark assets/honeypot-demo.cast assets/honeypot-demo.gif`.
 
 ## Reporting security issues
 

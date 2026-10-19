@@ -6,6 +6,9 @@ acceptable for each. Bundles are loaded once at proxy startup and compiled
 to an in-memory matcher — regex patterns are precompiled, allowlists are
 hashed.
 
+`halberd lint` rejects unknown policy keys, including misspelled argument
+rules. Bundles may use a top-level `_anchors` mapping to share YAML values.
+
 ## Top-level shape
 
 ```yaml
@@ -24,11 +27,11 @@ response_filters:               # optional; absent = no response inspection
 
 | Key | Required | Notes |
 | --- | --- | --- |
-| `version` | yes | Must be`1`. Future-incompatible changes bump this. |
+| `version` | yes | Must be `1`. Future-incompatible changes bump this. |
 | `server` | yes | Free-form identifier; appears in audit-log entries. |
-| `tools` | yes | List of tool rules. Empty list is valid but then every`tools/call`is rejected when`defaults.unknown_tool = deny`. |
-| `defaults.unknown_tool` | no | Default:`deny`. |
-| `defaults.unknown_method` | no | Default:`log_and_pass`. |
+| `tools` | yes | List of tool rules. An empty list is valid; every `tools/call` is then rejected when `defaults.unknown_tool = deny`. |
+| `defaults.unknown_tool` | no | Default: `deny`. |
+| `defaults.unknown_method` | no | Default: `log_and_pass`. |
 
 ## Tool rule
 
@@ -40,7 +43,7 @@ response_filters:               # optional; absent = no response inspection
     <arg-name>: <argument-rule>
 ```
 
-Tools whose `name`is referenced by a`tools/call` request are matched
+Tools whose `name` is referenced by a `tools/call` request are matched
 case-sensitively. A tool listed here with no `arguments` map is allowed
 unconditionally — useful for read-only metadata calls like `list_tables`.
 
@@ -60,15 +63,14 @@ must pass type, length, allow_values, *and* every deny_pattern.
 
 Patterns use Go's `regexp` package, which is RE2. **No backreferences, no
 lookaround.** Use `(?i)` for case-insensitive matching. Patterns are
-compiled at bundle load — invalid regex fails `halberd lint` with the file
-and line number.
+compiled at bundle load. Invalid regex fails `halberd lint` with the tool,
+argument, and pattern named in the error.
 
 ### Length limits
 
 `max_length` is measured in bytes of the UTF-8 encoded string, not Unicode
-code points. The default upper bound for any string argument should be
-8192 — long-tail tools rarely need more, and capping protects against
-denial-of-service via oversized payloads.
+code points. Consider an 8,192-byte limit for free-form arguments when the
+tool does not need larger inputs.
 
 ## Response inspection
 
@@ -82,28 +84,33 @@ fields round-trip verbatim — Halberd does not touch protocol metadata.
 | --- | --- |
 | `strip_ansi_escapes` | Removes CSI (`\x1b[...]`) and OSC (`\x1b]...\x07`) escape sequences. Tool output has no legitimate reason to contain terminal-control codes; their presence is a strong tool-poisoning signal. |
 | `strip_zero_width` | Removes U+200B/U+200C/U+200D/U+2060/U+FEFF. These are invisible but can carry steganographic payloads or split injection markers across log scrapers. |
-| `secret_scanners` | List of built-in detectors that replace matches with`[REDACTED]`. |
+| `secret_scanners` | List of built-in detectors that replace matches with `[REDACTED]`. |
 
 Built-in scanner names:
 
-- `aws_access_key`—`AKIA…`(standard) and`ASIA…` (STS) keys
-- `github_token`—`ghp_…`/`ghs_…`/`gho_…`/`ghr_…`/`ghu_…`, 36+ chars
-- `rsa_private_key`—`-----BEGIN [RSA|OPENSSH|EC|DSA] PRIVATE KEY-----` blocks, redacted from BEGIN to END
+- `aws_access_key` — `AKIA…` (standard) and `ASIA…` (STS) keys
+- `github_token` — `ghp_…`/`ghs_…`/`gho_…`/`ghr_…`/`ghu_…` and `github_pat_…` formats
+- `rsa_private_key` — `-----BEGIN [RSA|OPENSSH|EC|DSA] PRIVATE KEY-----` blocks, redacted from BEGIN to END
 
 A bundle with no `response_filters` block does no response-side work
 whatsoever — every response forwards verbatim. The check happens once at
 proxy startup, not per-request.
 
-### What response inspection does *not* cover in v0.1
+### Response inspection limits
 
-- **SSE streams.** When the upstream sends `Content-Type:
+- **HTTP event streams.** With response filters enabled, each complete JSON
+  event is inspected before forwarding. Invalid JSON or an event larger than
+  8 MiB ends the stream. An incomplete event is not forwarded.
 
-  text/event-stream`, Halberd forwards events unchanged. Per-event
-  inspection is on the v0.2 roadmap.
+- **Compressed HTTP responses.** Gzip is decoded before inspection. Other
+  content encodings receive a gateway error when filters are enabled.
 
 - **The `error` field.** Server-defined error messages are not
 
   sanitized — operators inspect them directly in audit logs.
+
+- **Non-JSON bodies.** The response inspector does not sanitize HTML or other
+  non-JSON upstream replies.
 
 - **Per-tool response policy.** Only `response_filters.global` exists in
 

@@ -36,7 +36,7 @@ describe("Auxiliary components", () => {
   it("renders Install", () => {
     const html = renderToString(React.createElement(Install));
     expect(html).toContain("The Gatehouse Keys");
-    expect(html).toContain("Download a release");
+    expect(html).toContain("There is no published binary release yet");
     expect(html).toContain("Build from source");
   });
 

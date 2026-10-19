@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     template: "%s — Halberd",
   },
   description:
-    "Halberd inspects every tools/call between an LLM agent and its MCP servers, blocking argument injection, capability creep, and tool-poisoning before they reach the host. Try it in the browser.",
+    "Halberd checks MCP tool calls against a YAML policy and can redact recognized secrets in tool results. Try the policy engine in your browser.",
   keywords: [
     "MCP",
     "Model Context Protocol",
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     url: siteUrl,
     title: "Halberd — a JSON-RPC firewall for MCP agents",
     description:
-      "Inspect every tools/call between an LLM and its MCP servers. Block argument injection, capability creep, and tool-poisoning before they reach the host.",
+      "Check MCP tool calls against a policy and redact recognized secrets from tool results. Try Halberd in your browser.",
     siteName: "Halberd",
     images: [
       {
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Halberd — a JSON-RPC firewall for MCP agents",
     description:
-      "Inspect every tools/call between an LLM and its MCP servers. Block argument injection, capability creep, and tool-poisoning before they reach the host.",
+      "Check MCP tool calls against a policy and redact recognized secrets from tool results. Try Halberd in your browser.",
     images: ["/social-preview.png"],
   },
   alternates: {

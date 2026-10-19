@@ -6,16 +6,16 @@ const threats = [
     id: "T1",
     chronicle: "I",
     name: "Tool poisoning",
-    coverage: "covered, v0.1",
+    coverage: "partial",
     summary:
       "A compromised MCP server slips role-tag spoofs, ANSI escapes, or zero-width Unicode into a tool response to hijack the agent's next turn.",
-    halberd: "Response inspector strikes ANSI and zero-width Unicode in place.",
+    halberd: "Configured filters strip selected ANSI escapes and zero-width characters from tool results. They do not detect prompt injection.",
   },
   {
     id: "T2",
     chronicle: "II",
     name: "Argument injection",
-    coverage: "covered, v0.1",
+    coverage: "rule-dependent",
     summary:
       "The agent is induced to call a legitimate tool with hostile arguments: DROP TABLE, --upload-pack=…, statement chaining via ;--.",
     halberd:
@@ -25,31 +25,31 @@ const threats = [
     id: "T3",
     chronicle: "III",
     name: "Out-of-scope I/O",
-    coverage: "v0.2 roadmap",
+    coverage: "planned",
     summary:
       "A narrow-purpose tool gets pushed to read /etc/shadow, hit a private IP, or write outside its sandbox.",
     halberd:
-      "Path-traversal, absolute-path, and home-expansion patterns already deny on filesystem and git packs.",
+      "Some bundles deny listed path patterns; Halberd does not enforce a filesystem root or network sandbox.",
   },
   {
     id: "T4",
     chronicle: "IV",
     name: "Capability creep",
-    coverage: "covered, v0.1",
+    coverage: "request-side guard",
     summary:
       'Mid-session, an MCP server pushes "tools/list_changed" and adds a tool the agent calls before any human reviews it.',
     halberd:
-      "Tool inventory pinned to the bundle; any unknown tool is denied by default.",
+      "Calls to tools absent from the bundle are denied. Halberd does not guard tools/list_changed notifications.",
   },
   {
     id: "T5",
     chronicle: "V",
     name: "Exfiltration via response",
-    coverage: "covered, v0.1",
+    coverage: "pattern-limited",
     summary:
       "A tool response carries AWS keys, GitHub tokens, or RSA private keys back into the model context.",
     halberd:
-      "Built-in scanners redact aws_access_key, github_token, and rsa_private_key on the wire.",
+      "Configured scanners redact recognized AWS keys, GitHub tokens, and private keys in JSON-RPC results.",
   },
 ];
 
@@ -65,8 +65,9 @@ export function Threats() {
         functional="The five named threat categories"
       />
       <p className="text-(--color-fg-2) mb-12 max-w-2xl">
-        Halberd v0.1 ships request- and response-side coverage for four of
-        the five threats below, on both the HTTP and stdio transports.
+        These are the risks Halberd is built around. Its current checks are
+        narrow: they depend on the selected rule pack and cannot replace a
+        sandbox or detect every hostile instruction.
       </p>
 
       <div className="grid md:grid-cols-2 gap-4">
@@ -95,7 +96,7 @@ export function Threats() {
               </div>
               <span
                 className={`text-xs font-mono px-2 py-0.5 rounded ${
-                  t.coverage.startsWith("covered")
+                  t.coverage !== "planned"
                     ? "text-(--color-brass) bg-(--color-brass)/10 border border-(--color-brass)/30"
                     : "text-(--color-warning) bg-(--color-warning)/10 border border-(--color-warning)/30"
                 }`}

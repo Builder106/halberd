@@ -4,6 +4,22 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-10-13: Close fail-open policy and response paths #decision
+
+Policy loading now rejects unknown keys, extra YAML documents, invalid default dispositions, and string-only constraints on numeric or boolean arguments; runtime type checks reject mismatches and nulls. The parser keeps the rule packs' `_anchors` section while checking the actual DSL strictly. The HTTP listener defaults to loopback, rejects cross-origin browser requests, decodes gzip before response inspection, and inspects complete JSON SSE events before forwarding them. Unsupported encodings and malformed or oversized filtered events fail closed. The stdio wrapper closes host input after child output ends so a dead child cannot leave the wrapper waiting forever. Documentation and site copy now describe the limited character stripping and secret scanners without claiming general prompt-injection detection, a read-only SQL policy, or an unpublished binary release. Browser QA now starts a fresh server instead of reusing an unrelated process on the same port.
+
+## 2026-10-13: Give the README banner an armory-print composition #decision
+
+The banner now pairs the project's Cormorant Garamond wordmark with a cropped diagonal halberd, drawn with steel facets, engraved blade lines, and brass fittings. Its caption, "A guard for AI tools," replaces the developer-only pipeline label. Desktop and phone layouts each have light and dark SVGs. Lettering is outlined so GitHub renders the type without external fonts; the artwork remains editable as vectors. The palette uses the existing parchment, slate, steel, and brass colors.
+
+## 2026-10-13: Replace the README sequence with a concrete policy story #decision
+
+The README now opens with a student-record lookup and an attempted table erasure. Its Diagram Design figure shows the permitted request crossing Halberd's policy boundary and the erase request stopping before it, using the existing weapon mark to make the interception visible. Plain-language labels explain the stakes, while SQL, the error code, and linked implementation details serve developers. Desktop and compact phone layouts have light and dark PNG exports; the editable HTML and exporter live beside them. Technical detail and existing recordings are expandable so the first explanation stays focused. The figure describes request checks only; the developer notes explain response filtering, including inspected HTTP event streams.
+
+## 2026-10-13: Move visual maintenance instructions out of the README #decision
+
+Asset dimensions, social-preview upload steps, and demo-recording commands now live in CONTRIBUTING.md. The README keeps the demos and video links for readers evaluating or using Halberd.
+
 ## 2026-08-14: Accessible plain-English documentation update #decision
 
 Refactored the README introductory hook and project tagline to make the firewall's value proposition immediately intuitive to non-technical readers. Added an airport security checkpoint analogy to explain the MCP proxy barrier in plain language before diving into the wire-level JSON-RPC architecture and WebAssembly playground.
