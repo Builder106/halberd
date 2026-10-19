@@ -115,7 +115,18 @@ func (e *Engine) evaluateToolCall(raw json.RawMessage) Decision {
 }
 
 func evaluateArg(tool, name string, val json.RawMessage, rule ArgumentRule) []Violation {
+	if rule.Type == "number" || rule.Type == "boolean" {
+		matches := (rule.Type == "number" && len(val) > 0 && (val[0] == '-' || val[0] >= '0' && val[0] <= '9')) ||
+			(rule.Type == "boolean" && (string(val) == "true" || string(val) == "false"))
+		if !matches {
+			return []Violation{{Category: CategoryArgInjection, Tool: tool, Field: name, Rule: "type_mismatch", Detail: "expected " + rule.Type}}
+		}
+		return nil
+	}
 	var str string
+	if string(val) == "null" && rule.Type == "string" {
+		return []Violation{{Category: CategoryArgInjection, Tool: tool, Field: name, Rule: "type_mismatch", Detail: "expected string"}}
+	}
 	if err := json.Unmarshal(val, &str); err != nil {
 		if rule.Type == "string" {
 			return []Violation{{
@@ -123,7 +134,7 @@ func evaluateArg(tool, name string, val json.RawMessage, rule ArgumentRule) []Vi
 				Tool:     tool,
 				Field:    name,
 				Rule:     "type_mismatch",
-				Detail:   fmt.Sprintf("expected string, got %s", string(val)),
+				Detail:   "expected string",
 			}}
 		}
 		return nil

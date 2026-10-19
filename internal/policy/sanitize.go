@@ -39,9 +39,8 @@ var builtinScanners = map[string]secretScanner{
 		replace: func(_ string) string { return redactedPlaceholder },
 	},
 	"github_token": {
-		// GitHub personal access tokens (classic + fine-grained) and
-		// server-to-server tokens, all 36+ chars after the prefix.
-		re:      regexp.MustCompile(`\bgh[pousr]_[A-Za-z0-9]{36,}\b`),
+		// GitHub's gh-prefixed tokens and fine-grained PATs.
+		re:      regexp.MustCompile(`\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{20,})\b`),
 		replace: func(_ string) string { return redactedPlaceholder },
 	},
 	"rsa_private_key": {

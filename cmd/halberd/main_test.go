@@ -17,7 +17,7 @@ func testPolicyYaml(t *testing.T) string {
 server: test-server
 tools:
   - name: echo
-    action: allow
+    arguments: {}
 `
 	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
 		t.Fatalf("failed to write test policy: %v", err)

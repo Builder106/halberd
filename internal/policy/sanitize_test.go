@@ -66,16 +66,15 @@ func TestSanitizeString_RedactsAWSKey(t *testing.T) {
 }
 
 func TestSanitizeString_RedactsGitHubToken(t *testing.T) {
-	in := "token: ghp_" + strings.Repeat("A", 36) + " keep this"
-	out, det := allFilter().sanitizeString(in, "")
-	if !strings.Contains(out, redactedPlaceholder) {
-		t.Errorf("got %q, expected [REDACTED]", out)
-	}
-	if strings.Contains(out, "ghp_AAAA") {
-		t.Errorf("GitHub token leaked: %q", out)
-	}
-	if len(det) == 0 || det[0].Kind != "github_token" {
-		t.Errorf("expected github_token detection, got %+v", det)
+	for _, token := range []string{"ghp_" + strings.Repeat("A", 36), "github_pat_" + strings.Repeat("B", 24) + "_" + strings.Repeat("C", 20)} {
+		in := "token: " + token + " keep this"
+		out, det := allFilter().sanitizeString(in, "")
+		if !strings.Contains(out, redactedPlaceholder) || strings.Contains(out, token) {
+			t.Errorf("GitHub token was not redacted: %q", out)
+		}
+		if len(det) == 0 || det[0].Kind != "github_token" {
+			t.Errorf("expected github_token detection, got %+v", det)
+		}
 	}
 }
 

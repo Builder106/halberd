@@ -4,7 +4,9 @@
 package policy
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 
@@ -16,6 +18,7 @@ import (
 type Bundle struct {
 	Version         int              `yaml:"version"`
 	Server          string           `yaml:"server"`
+	Anchors         yaml.Node        `yaml:"_anchors,omitempty"`
 	Tools           []ToolRule       `yaml:"tools"`
 	Defaults        Defaults         `yaml:"defaults"`
 	ResponseFilters *ResponseFilters `yaml:"response_filters,omitempty"`
@@ -42,6 +45,24 @@ type GlobalResponseFilter struct {
 type Defaults struct {
 	UnknownTool   string `yaml:"unknown_tool"`
 	UnknownMethod string `yaml:"unknown_method"`
+}
+
+func (d *Defaults) UnmarshalYAML(node *yaml.Node) error {
+	var values map[string]string
+	if err := node.Decode(&values); err != nil {
+		return err
+	}
+	for key, value := range values {
+		switch key {
+		case "unknown_tool":
+			d.UnknownTool = value
+		case "unknown_method":
+			d.UnknownMethod = value
+		default:
+			return fmt.Errorf("defaults: unknown field %q", key)
+		}
+	}
+	return nil
 }
 
 // ToolRule is the policy for one MCP tool (one entry under `tools:` in the
@@ -89,8 +110,17 @@ func LoadBundle(path string) (*Bundle, error) {
 // embedded testdata).
 func ParseBundle(raw []byte) (*Bundle, error) {
 	var b Bundle
-	if err := yaml.Unmarshal(raw, &b); err != nil {
+	decoder := yaml.NewDecoder(bytes.NewReader(raw))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(&b); err != nil {
 		return nil, fmt.Errorf("parse policy bundle: %w", err)
+	}
+	var extra yaml.Node
+	if err := decoder.Decode(&extra); err != io.EOF {
+		if err != nil {
+			return nil, fmt.Errorf("parse policy bundle: %w", err)
+		}
+		return nil, fmt.Errorf("parse policy bundle: multiple YAML documents")
 	}
 	if err := b.compile(); err != nil {
 		return nil, err
@@ -136,6 +166,14 @@ func (b *Bundle) validate() error {
 	if b.Defaults.UnknownMethod == "" {
 		b.Defaults.UnknownMethod = DispositionLogAndPass
 	}
+	for name, disposition := range map[string]string{
+		"unknown_tool":   b.Defaults.UnknownTool,
+		"unknown_method": b.Defaults.UnknownMethod,
+	} {
+		if disposition != DispositionAllow && disposition != DispositionDeny && disposition != DispositionLogAndPass {
+			return fmt.Errorf("defaults.%s: unsupported disposition %q", name, disposition)
+		}
+	}
 	for _, t := range b.Tools {
 		if t.Name == "" {
 			return fmt.Errorf("tool with empty name")
@@ -143,6 +181,9 @@ func (b *Bundle) validate() error {
 		for argName, arg := range t.Arguments {
 			if arg.Type != "" && arg.Type != "string" && arg.Type != "number" && arg.Type != "boolean" {
 				return fmt.Errorf("tool %q arg %q: unsupported type %q", t.Name, argName, arg.Type)
+			}
+			if (arg.Type == "number" || arg.Type == "boolean") && (arg.MaxLength != 0 || len(arg.AllowValues) > 0 || len(arg.DenyPatterns) > 0) {
+				return fmt.Errorf("tool %q arg %q: string constraints require type string", t.Name, argName)
 			}
 		}
 	}

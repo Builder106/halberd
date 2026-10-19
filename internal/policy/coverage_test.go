@@ -221,6 +221,9 @@ tools:
         deny_patterns: ["bad"]
       num_arg:
         type: number
+      bool_arg:
+        type: boolean
+      optional_arg: {}
 defaults:
   unknown_tool: deny
   unknown_method: log_and_pass
@@ -240,6 +243,24 @@ defaults:
 	dNumOk := e.EvaluateRequest([]byte(`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"test_tool","arguments":{"num_arg":12345}}}`))
 	if dNumOk.Blocked {
 		t.Fatalf("expected number allowed, got %v", dNumOk.Violations)
+	}
+	for _, test := range []struct {
+		arg  string
+		val  string
+		want bool
+	}{
+		{"num_arg", `"123"`, true},
+		{"num_arg", `null`, true},
+		{"bool_arg", `false`, false},
+		{"bool_arg", `1`, true},
+		{"bool_arg", `null`, true},
+		{"str_arg", `null`, true},
+		{"optional_arg", `123`, false},
+	} {
+		payload := `{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"test_tool","arguments":{"` + test.arg + `":` + test.val + `}}}`
+		if got := e.EvaluateRequest([]byte(payload)); got.Blocked != test.want {
+			t.Errorf("%s=%s blocked=%v, want %v", test.arg, test.val, got.Blocked, test.want)
+		}
 	}
 
 	// Truncate long value in truncate() helper
