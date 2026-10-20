@@ -4,6 +4,10 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-10-19: Drop playground seal names from the firewall diagram #decision
+
+The architecture sequence labeled verdicts with the web playground's wax seal colors, which mean nothing outside that UI. The verdicts are now refused, allowed, and amended.
+
 ## 2026-10-19: Trim the policy figure to the diagram #decision
 
 The README sentence above the policy figure already makes its claim, so the title, subtitle, and footnote are gone from the image. It now holds only the two requests, the boundary, and the database tool. The exporter's text-bounds check now respects the viewBox origin, so a cropped figure still passes.

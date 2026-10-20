@@ -20,26 +20,26 @@ Every JSON-RPC `tools/call` envelope passes through the decision engine:
 
 ```mermaid
 sequenceDiagram
-    participant Agent as LLM Agent
-    participant Firewall as Halberd Proxy
-    participant Policy as Policy Engine (Go / WASM)
-    participant Server as Upstream MCP Server
+    participant Agent as AI assistant
+    participant Firewall as Halberd proxy
+    participant Policy as Policy engine
+    participant Server as Upstream MCP server
 
-    Agent->>Firewall: JSON-RPC tools/call (POST)
+    Agent->>Firewall: JSON-RPC tools/call
     Firewall->>Policy: EvaluateRequest(payload, policyPack)
-    alt Rule Violation (T2 / T4)
-        Policy-->>Firewall: Verdict: Refused (Red Seal)
-        Firewall-->>Agent: Synthetic JSON-RPC Error (-32000)
-    else Policy Allowed
-        Policy-->>Firewall: Verdict: Pass Granted (Brass Seal)
-        Firewall->>Server: Forward Request
-        Server-->>Firewall: Tool Response
+    alt Rule violation (T2 or T4)
+        Policy-->>Firewall: Refused
+        Firewall-->>Agent: JSON-RPC error -32000
+    else Allowed
+        Policy-->>Firewall: Allowed
+        Firewall->>Server: Forward the request
+        Server-->>Firewall: Tool response
         Firewall->>Policy: EvaluateResponse(responsePayload)
-        alt Configured filter matches
-            Policy-->>Firewall: Verdict: Amended (Blue Ink Seal)
-            Firewall-->>Agent: Redacted Response ([REDACTED])
-        else Clean Response
-            Firewall-->>Agent: Original Response
+        alt A configured filter matches
+            Policy-->>Firewall: Amended
+            Firewall-->>Agent: Response with [REDACTED] values
+        else No filter matches
+            Firewall-->>Agent: Original response
         end
     end
 ```
