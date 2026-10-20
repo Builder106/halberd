@@ -55,7 +55,12 @@ try {
         let minimumContrast = Infinity;
         for (const text of svg.querySelectorAll("text")) {
           const bounds = text.getBBox();
-          if (bounds.x < 0 || bounds.y < 0 || bounds.x + bounds.width > box.width || bounds.y + bounds.height > box.height) {
+          if (
+            bounds.x < box.x ||
+            bounds.y < box.y ||
+            bounds.x + bounds.width > box.x + box.width ||
+            bounds.y + bounds.height > box.y + box.height
+          ) {
             throw new Error(`Text leaves the canvas: ${text.textContent}`);
           }
           const foreground = luminance(getComputedStyle(text).fill);

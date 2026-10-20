@@ -33,7 +33,6 @@
       svg { display: block; width: 100%; height: auto; }
       .compact { display: none; }
       text { fill: var(--ink); font-family: var(--font-body); font-weight: 500; }
-      .title { font-size: 32px; font-weight: 700; }
       .heading { font-size: 22px; font-weight: 700; }
       .code { font-family: var(--font-code); font-size: 20px; }
       .note { font-size: 18px; fill: var(--muted); }
@@ -57,7 +56,7 @@
   </head>
   <body>
     <main class="diagram-container">
-      <svg class="wide" id="policy-check-wide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" role="img" aria-labelledby="policy-check-wide-title policy-check-wide-desc">
+      <svg class="wide" id="policy-check-wide" xmlns="http://www.w3.org/2000/svg" viewBox="0 100 960 372" role="img" aria-labelledby="policy-check-wide-title policy-check-wide-desc">
         <title id="policy-check-wide-title">Halberd intercepts a destructive database request</title>
         <desc id="policy-check-wide-desc">The assistant asks to read ten student records and to erase the students table. The read request passes through Halberd to the database tool. The DROP TABLE request stops before the policy boundary and returns JSON-RPC error -32000.</desc>
         <defs>
@@ -65,8 +64,6 @@
           <marker id="policy-check-wide-stop" markerWidth="12" markerHeight="16" refX="6" refY="8" orient="auto"><path d="M 6 0 V 16" class="refused"/></marker>
         </defs>
         <rect width="960" height="520" class="paper"/>
-        <text x="32" y="56" class="title">Halberd intercepts the erase request.</text>
-        <text x="32" y="92" class="note">Your policy decides which calls reach the tool.</text>
         <path d="M 552 168 V 188 M 552 236 V 460" class="boundary"/>
         <path d="M 328 208 H 768" class="route" marker-end="url(#policy-check-wide-arrow)"/>
         <path d="M 328 392 H 512" class="refused" marker-end="url(#policy-check-wide-stop)"/>
@@ -95,9 +92,8 @@
         </g>
         <text x="832" y="328" class="heading" text-anchor="middle">Database tool</text>
         <text x="832" y="360" class="note" text-anchor="middle">Only the lookup arrives</text>
-        <text x="32" y="496" class="note">The erase command is stopped before the tool can execute it.</text>
       </svg>
-      <svg class="compact" id="policy-check-compact" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 792" role="img" aria-labelledby="policy-check-compact-title policy-check-compact-desc">
+      <svg class="compact" id="policy-check-compact" xmlns="http://www.w3.org/2000/svg" viewBox="0 112 480 680" role="img" aria-labelledby="policy-check-compact-title policy-check-compact-desc">
         <title id="policy-check-compact-title">Halberd intercepts a destructive database request</title>
         <desc id="policy-check-compact-desc">The assistant asks to read ten student records and to erase the students table. The read request passes through Halberd to the database tool. The DROP TABLE request stops before the policy boundary and returns JSON-RPC error -32000.</desc>
         <defs>
@@ -105,8 +101,6 @@
           <marker id="policy-check-compact-stop" markerWidth="12" markerHeight="16" refX="6" refY="8" orient="auto"><path d="M 6 0 V 16" class="refused"/></marker>
         </defs>
         <rect width="480" height="792" class="paper"/>
-        <text x="24" y="52" class="title">Halberd intercepts</text>
-        <text x="24" y="88" class="title">the erase request.</text>
         <path d="M 24 480 H 396 M 456 480 H 464" class="boundary"/>
         <path d="M 324 184 H 424 Q 432 184 432 192 V 640 Q 432 648 424 648 H 408" class="route" marker-end="url(#policy-check-compact-arrow)"/>
         <path d="M 180 352 V 432" class="refused" marker-end="url(#policy-check-compact-stop)"/>

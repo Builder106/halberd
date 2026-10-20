@@ -4,6 +4,10 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-10-19: Trim the policy figure to the diagram #decision
+
+The README sentence above the policy figure already makes its claim, so the title, subtitle, and footnote are gone from the image. It now holds only the two requests, the boundary, and the database tool. The exporter's text-bounds check now respects the viewBox origin, so a cropped figure still passes.
+
 ## 2026-10-13: Close fail-open policy and response paths #decision
 
 Policy loading now rejects unknown keys, extra YAML documents, invalid default dispositions, and string-only constraints on numeric or boolean arguments; runtime type checks reject mismatches and nulls. The parser keeps the rule packs' `_anchors` section while checking the actual DSL strictly. The HTTP listener defaults to loopback, rejects cross-origin browser requests, decodes gzip before response inspection, and inspects complete JSON SSE events before forwarding them. Unsupported encodings and malformed or oversized filtered events fail closed. The stdio wrapper closes host input after child output ends so a dead child cannot leave the wrapper waiting forever. Documentation and site copy now describe the limited character stripping and secret scanners without claiming general prompt-injection detection, a read-only SQL policy, or an unpublished binary release. Browser QA now starts a fresh server instead of reusing an unrelated process on the same port.
