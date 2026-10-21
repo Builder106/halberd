@@ -22,16 +22,16 @@ Halberd sits between the assistant and its connected tools. You choose the rules
 
 ## One tool, two outcomes
 
-Here are two requests checked against the same bundled PostgreSQL policy. The lookup passes. The erase command stops before it reaches the database tool.
+Every tool call is checked before it leaves the proxy. A refused call never reaches the MCP server.
 
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="assets/diagrams/policy-check-mobile-dark.png">
-  <source media="(max-width: 600px)" srcset="assets/diagrams/policy-check-mobile-light.png">
   <source media="(prefers-color-scheme: dark)" srcset="assets/diagrams/policy-check-dark.png">
-  <img src="assets/diagrams/policy-check-light.png" alt="Halberd forwards a request to read ten records and refuses a request to erase the students table before it reaches the database tool." width="960">
+  <img src="assets/diagrams/policy-check.png" alt="The assistant sends tools/call to the Halberd proxy, where the policy check evaluates it. An allowed call goes on to the MCP server. A refused call goes back to the assistant as an error. Both decisions are recorded on the audit bus." width="720">
 </picture>
 
-`SELECT id, name FROM students LIMIT 10` reaches the database tool unchanged. `DROP TABLE students` matches a forbidden-command pattern, so the assistant receives an error instead. Both decisions are sent to the audit bus for recording.
+[Edit the diagram](assets/diagrams/policy-check.html).
+
+Here are two requests checked against the bundled PostgreSQL policy. `SELECT id, name FROM students LIMIT 10` reaches the database tool unchanged. `DROP TABLE students` matches a forbidden-command pattern, so the assistant receives an error instead. Both decisions are sent to the audit bus for recording.
 
 <details>
 <summary><strong>Developer details</strong></summary>

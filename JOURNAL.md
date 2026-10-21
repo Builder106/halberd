@@ -4,6 +4,10 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-10-21: Replace the illustrated policy figure #decision
+
+The weapon-mark illustration was a hero graphic, and it needed its own exporter and a separate phone layout. The figure is now a plain proxy figure: the policy check either forwards a call to the MCP server or refuses it, and every decision goes to the audit bus. The SQL examples moved to the text under it.
+
 ## 2026-10-19: Drop playground seal names from the firewall diagram #decision
 
 The architecture sequence labeled verdicts with the web playground's wax seal colors, which mean nothing outside that UI. The verdicts are now refused, allowed, and amended.
