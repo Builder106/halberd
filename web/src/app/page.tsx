@@ -1,22 +1,22 @@
+import { Close } from "../components/Close";
+import { Exchange } from "../components/Exchange";
 import { Hero } from "../components/Hero";
-import { Playground } from "../components/Playground";
-import { Threats, Armory } from "../components/ThreatModel";
-import { Install } from "../components/Install";
-import { Footer } from "../components/Footer";
-import { KeepNav } from "../components/KeepNav";
+import { SessionMotion } from "../components/SessionMotion";
+import { exchanges } from "../data/session";
 
-export default function Home() {
+export default function Session() {
   return (
     <>
-      <KeepNav />
-      <main className="flex-1 md:pl-56">
-        <Hero />
-        <Playground />
-        <Threats />
-        <Armory />
-        <Install />
-        <Footer />
-      </main>
+      <Hero />
+      <ol className="session" aria-label="The session, one request at a time">
+        {exchanges.map((x) => (
+          <li key={x.id}>
+            <Exchange x={x} />
+          </li>
+        ))}
+      </ol>
+      <Close />
+      <SessionMotion />
     </>
   );
 }

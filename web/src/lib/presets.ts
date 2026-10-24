@@ -34,7 +34,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "pg-drop",
-      label: "DROP TABLE (blocked)",
+      label: "DROP TABLE (refused)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -53,7 +53,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "pg-comment-chain",
-      label: "Statement chaining via ; -- (blocked)",
+      label: "Statement chaining via ; -- (refused)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -72,7 +72,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "pg-pgread",
-      label: "pg_read_server_files (blocked)",
+      label: "pg_read_server_files (refused)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -91,7 +91,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "pg-secret-resp",
-      label: "Response with embedded AWS key (sanitized)",
+      label: "Response with embedded AWS key (amended)",
       direction: "response",
       payload: JSON.stringify(
         {
@@ -134,7 +134,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "fs-traversal",
-      label: "Path traversal (blocked)",
+      label: "Path traversal (refused)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -153,7 +153,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "fs-absolute",
-      label: "Absolute path (blocked)",
+      label: "Absolute path (refused)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -172,7 +172,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "fs-home",
-      label: "Home expansion to .ssh/id_rsa (blocked)",
+      label: "Home expansion to .ssh/id_rsa (refused)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -209,7 +209,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "git-upload-pack",
-      label: "--upload-pack smuggling via ref (blocked)",
+      label: "--upload-pack smuggling via ref (refused)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -228,7 +228,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "git-write",
-      label: "git_commit (denied — write tool not in bundle)",
+      label: "git_commit (refused, write tool not in bundle)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -265,7 +265,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "gh-out-of-org",
-      label: "get_issue outside org allowlist (blocked)",
+      label: "get_issue outside org allowlist (refused)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -284,7 +284,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "gh-delete",
-      label: "delete_repository (denied — not in bundle)",
+      label: "delete_repository (refused, not in bundle)",
       direction: "request",
       payload: JSON.stringify(
         {
@@ -305,7 +305,7 @@ export const presets: Record<string, Preset[]> = {
   "halberd-honeypot": [
     {
       id: "hp-poisoned-resp",
-      label: "Tool-poisoning response (sanitized)",
+      label: "Tool-poisoning response (amended)",
       direction: "response",
       payload: JSON.stringify(
         {
@@ -327,7 +327,7 @@ export const presets: Record<string, Preset[]> = {
     },
     {
       id: "hp-secrets-resp",
-      label: "Response with AWS + GitHub + RSA (sanitized)",
+      label: "Response with AWS + GitHub + RSA (amended)",
       direction: "response",
       payload: JSON.stringify(
         {

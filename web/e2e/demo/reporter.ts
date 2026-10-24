@@ -70,6 +70,10 @@ class DemoReporter implements Reporter {
         // on the GIF block below).
         this.runFfmpeg([
           "-y",
+          // The recording begins before navigation. Start on the loaded console
+          // so the README GIF has a useful first frame.
+          "-ss",
+          "2",
           "-i",
           webm,
           "-c:v",

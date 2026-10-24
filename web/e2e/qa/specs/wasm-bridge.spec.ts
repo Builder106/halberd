@@ -37,7 +37,7 @@ test.beforeEach(async ({ page }) => {
   // started after WebAssembly.instantiateStreaming resolves. The
   // playground's loader (web/src/lib/halberd.ts) handles all that
   // — we just wait for the global to land.
-  await page.goto("/");
+  await page.goto("/console");
   try {
     await page.waitForFunction(
       () => typeof globalThis.halberd === "object",
@@ -45,8 +45,8 @@ test.beforeEach(async ({ page }) => {
       { timeout: 20_000 },
     );
   } catch (error) {
-    const sentry = await page.locator("#sentry").innerText();
-    throw new Error(`WASM bridge did not load. Browser errors: ${browserErrors.join(" | ")}. Sentry: ${sentry}`, { cause: error });
+    const pageText = await page.locator("main").innerText();
+    throw new Error(`WASM bridge did not load. Browser errors: ${browserErrors.join(" | ")}. Page: ${pageText}`, { cause: error });
   }
 });
 

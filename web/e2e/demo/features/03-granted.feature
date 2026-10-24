@@ -1,16 +1,14 @@
-# Cluster III — PASS GRANTED. Halberd is a firewall, not a wall — a
-# safe request flows through unchanged. This scenario exists to
-# counter the easy misread that "everything just gets blocked." The
-# brass-seal verdict shows the affirmative case clearly.
+# Cluster III, allowed. A safe request flows through unchanged. This
+# scenario counters the easy misread that everything gets blocked.
 
-Feature: Pass granted — a safe envelope reaches the upstream
+Feature: Allowed: a safe request reaches the server
 
   Background:
-    Given I am on the Halberd playground
+    Given I am on the Halberd console
 
   Scenario: A safe SELECT is forwarded under the postgres bundle
     When I choose the "mcp-server-postgres" rule pack
     And I load the "Safe SELECT (allowed)" scenario
-    And I challenge the envelope
-    Then the verdict reads "Pass granted"
+    And I send it through Halberd
+    Then the verdict reads "Allowed"
     And no violations are recorded

@@ -9,10 +9,10 @@
 Feature: Warmup
 
   Scenario: Warmup A
-    Given I am on the Halberd playground
+    Given I am on the Halberd console
 
   Scenario: Warmup B
-    Given I am on the Halberd playground
+    Given I am on the Halberd console
 
   Scenario: Warmup C
-    Given I am on the Halberd playground
+    Given I am on the Halberd console

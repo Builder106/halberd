@@ -3,8 +3,8 @@ import { defineBddConfig } from "playwright-bdd";
 
 const testPort = process.env.HALBERD_TEST_PORT ?? "3010";
 
-// QA-BDD config: Gherkin QA scenarios that exercise the playground UI
-// end-to-end — pack picker, preset buttons, challenge button, verdict
+// QA-BDD config: Gherkin QA scenarios that exercise the console UI
+// end-to-end — pack picker, preset buttons, send button, verdict
 // rendering, violation display, and rewritten payloads. These complement
 // wasm-bridge.spec.ts (which calls the WASM bridge directly via
 // page.evaluate) by going through the React component layer.

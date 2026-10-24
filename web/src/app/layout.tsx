@@ -1,101 +1,84 @@
-import type { Metadata } from "next";
-import { Cormorant_Garamond, Manrope, JetBrains_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Archivo, Fragment_Mono } from "next/font/google";
+import { Corners } from "../components/Corners";
+import { LaneHeader } from "../components/LaneHeader";
+import { Motion } from "../components/Motion";
+import { site } from "../data/session";
 import "./globals.css";
 
-// Display serif used only for the ceremonial section headers ("II. THE
-// SENTRY'S CHALLENGE") and the keep tour rail. The brand calls for a
-// high-contrast Garamond with strong italics.
-const cormorant = Cormorant_Garamond({
+// Archivo carries everything but the wire traffic; its width axis gives the
+// display line (wdth 112) and the lane labels (wdth 80) one family.
+const archivo = Archivo({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  style: ["normal", "italic"],
+  axes: ["wdth"],
   display: "swap",
-  variable: "--font-display-serif",
+  variable: "--font-archivo",
 });
 
-// Body copy — Manrope is a characterful grotesque with a warmer roundness
-// than Inter; reads as a printer's body type next to the Garamond display.
-const manrope = Manrope({
+// Fragment Mono is reserved for JSON-RPC envelopes and rule names.
+const fragment = Fragment_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
   display: "swap",
-  variable: "--font-body-sans",
+  variable: "--font-fragment",
 });
-
-// Monospace — used for tools/call payloads, policy YAML, status lines. The
-// JetBrains glyph set has the punctuation density these need.
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--font-body-mono",
-});
-
-const siteUrl = "https://halberd-keep.vercel.app";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(site.url),
   title: {
-    default: "Halberd — a JSON-RPC firewall for MCP agents",
-    template: "%s — Halberd",
+    default: "Halberd: every MCP tool call meets this line first",
+    template: "%s | Halberd",
   },
-  description:
-    "Halberd checks MCP tool calls against a YAML policy and can redact recognized secrets in tool results. Try the policy engine in your browser.",
-  keywords: [
-    "MCP",
-    "Model Context Protocol",
-    "LLM security",
-    "prompt injection",
-    "agentic AI",
-    "JSON-RPC",
-    "policy proxy",
-    "Claude Desktop",
-    "Cursor",
-    "Windsurf",
-  ],
+  description: site.description,
   authors: [{ name: "Yinka Vaughan", url: "https://github.com/Builder106" }],
-  icons: {
-    icon: "/favicon.svg",
-    apple: "/apple-touch-icon.png",
-  },
+  alternates: { canonical: "./" },
   openGraph: {
     type: "website",
-    url: siteUrl,
-    title: "Halberd — a JSON-RPC firewall for MCP agents",
-    description:
-      "Check MCP tool calls against a policy and redact recognized secrets from tool results. Try Halberd in your browser.",
     siteName: "Halberd",
-    images: [
-      {
-        url: "/social-preview.png",
-        width: 1200,
-        height: 630,
-        alt: "Halberd — a JSON-RPC firewall for MCP agents",
-      },
-    ],
+    images: [{ url: "/social-preview.png", width: 1200, height: 630, alt: "Halberd: every tool call meets this line first" }],
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Halberd — a JSON-RPC firewall for MCP agents",
-    description:
-      "Check MCP tool calls against a policy and redact recognized secrets from tool results. Try Halberd in your browser.",
-    images: ["/social-preview.png"],
-  },
-  alternates: {
-    canonical: siteUrl,
-  },
+  twitter: { card: "summary_large_image", images: ["/social-preview.png"] },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export const viewport: Viewport = { themeColor: "#F1F2F4" };
+
+// Runs before first paint: hidden-until-played styles apply only when JS runs and motion is allowed.
+const flags = `document.documentElement.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('motion')`;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareSourceCode",
+  name: "Halberd",
+  description: site.description,
+  codeRepository: site.repo,
+  programmingLanguage: "Go",
+  license: "https://opensource.org/licenses/MIT",
+  url: site.url,
+};
+
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      className={`h-full antialiased dark ${cormorant.variable} ${manrope.variable} ${jetbrainsMono.variable}`}
-    >
-      <body className="min-h-full flex flex-col">
-        {children}
+    <html lang="en" className={`${archivo.variable} ${fragment.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: flags }} />
+      </head>
+      <body>
+        <a className="skip-link" href="#main">
+          Skip to content
+        </a>
+        <div id="curtain" aria-hidden="true">
+          <div className="curtain__panel" />
+        </div>
+        <LaneHeader />
+        <main id="main" tabIndex={-1}>
+          {children}
+        </main>
+        <Corners />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+        />
+        <Motion />
       </body>
     </html>
   );

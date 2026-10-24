@@ -19,6 +19,7 @@ import { defineBddConfig } from "playwright-bdd";
 // editing this file.
 
 const SLOWMO = Number(process.env.DEMO_SLOWMO ?? 1200);
+const testPort = process.env.HALBERD_TEST_PORT ?? "3010";
 
 const testDir = defineBddConfig({
   features: "e2e/demo/features/**/*.feature",
@@ -39,10 +40,8 @@ export default defineConfig({
   workers: 1,
   retries: 0,
 
-  // Use the live deployment by default; HALBERD_URL can override to
-  // localhost:3000 during dev.
   use: {
-    baseURL: process.env.HALBERD_URL ?? "https://halberd-keep.vercel.app",
+    baseURL: process.env.HALBERD_URL ?? `http://localhost:${testPort}`,
     headless: true,
     viewport: { width: 1440, height: 900 },
     video: {
@@ -55,6 +54,15 @@ export default defineConfig({
     actionTimeout: 30_000,
     navigationTimeout: 30_000,
   },
+
+  webServer: process.env.HALBERD_URL
+    ? undefined
+    : {
+        command: `npx next build && npx next start --port ${testPort}`,
+        url: `http://localhost:${testPort}`,
+        reuseExistingServer: false,
+        timeout: 180_000,
+      },
 
   reporter: [["list"], ["./e2e/demo/reporter.ts", { outDir: "../assets/demo" }]],
 
