@@ -152,14 +152,17 @@ The 1200×630 link-preview card has an editable
 upload the PNG through **Settings > Social preview > Upload an image**.
 
 [`assets/favicon.svg`](assets/favicon.svg) is designed for legibility at
-32×32. [`assets/apple-touch-icon.png`](assets/apple-touch-icon.png) is the
-180×180 iOS home-screen icon on a solid background. Instructions for editing
+32×32. The app also serves the mark as [`/icon.svg`](web/src/app/icon.svg) and
+a four-size [`/favicon.ico`](web/src/app/favicon.ico) for clients that request
+that path. [`assets/apple-touch-icon.svg`](assets/apple-touch-icon.svg) is the
+editable source for the 180×180 [iOS icon](assets/apple-touch-icon.png).
+Instructions for editing
 and exporting the policy illustration are in
 [`assets/diagrams/README.md`](assets/diagrams/README.md).
 
 ### Recording demos
 
-The playground recordings come from the
+The console recordings come from the
 [`Gherkin demo suite`](web/e2e/demo/). Run `cd web && npm run demo` to record
 them again. Each clip has a GIF and an H.264 MP4 in `assets/demo/`.
 

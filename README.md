@@ -47,13 +47,13 @@ These decisions come from the configured rules. Halberd does not create an opera
 
 </details>
 
-**Try the same requests:** [Open the playground](https://halberd-keep.vercel.app), choose the PostgreSQL pack, and compare the two queries. The playground runs the real Go policy engine compiled to WebAssembly, so you can inspect a decision without installing the proxy.
+**Try the same requests:** [Open the console](https://halberd-keep.vercel.app/console), choose the PostgreSQL pack, and compare the two queries. The console runs the Go policy engine in your browser through WebAssembly, so you can inspect a decision without installing the proxy.
 
 <details>
 <summary><strong>Watch it work</strong></summary>
 
-<a href="https://halberd-keep.vercel.app">
-  <img src="assets/playground-hero.png" alt="Halberd's playground showing a DROP TABLE request blocked with a red wax-seal verdict and the violation detail" width="100%">
+<a href="https://halberd-keep.vercel.app/console">
+  <img src="assets/console-hero.png" alt="Halberd's console refusing a DROP TABLE request, with the matched SQL rule and an empty server lane" width="100%">
 </a>
 
 Every challenge resolves to one of three protocol verdicts:
@@ -61,39 +61,39 @@ Every challenge resolves to one of three protocol verdicts:
 | Verdict | Disposition | Client response |
 | --- | --- | --- |
 | **Refused** | Blocked | Synthetic JSON-RPC error (`-32000`) before reaching upstream |
-| **Pass granted** | Allowed | Request forwarded to upstream tool server unchanged |
+| **Allowed** | Forwarded | Request forwarded to upstream tool server unchanged |
 | **Amended** | Sanitized | Response rewritten to redact secrets and strip control characters |
 
 ### See it in motion
 
-A `DROP TABLE` under the postgres bundle, refused with a red wax seal:
+A `DROP TABLE` under the PostgreSQL pack, refused before forwarding:
 
-![Halberd refusing a DROP TABLE under the mcp-server-postgres bundle: a red wax seal is pressed and the deny_pattern violation is surfaced](assets/demo/refused-drop-table.gif)
+![The console refuses a DROP TABLE request and shows the deny_pattern violation on the sql field](assets/demo/refused-drop-table.gif)
 
 <sub><a href="assets/demo/refused-drop-table.mp4">Watch the MP4 version</a>.</sub>
 
 <details>
-<summary><strong>⚔ Refused:</strong> path traversal attempt blocked under filesystem rules</summary>
+<summary><strong>Refused:</strong> path traversal attempt stopped by the filesystem pack</summary>
 
-![Halberd refusing a ../../etc/shadow read under the mcp-server-filesystem bundle: red wax seal with the path-traversal deny_pattern detail](assets/demo/refused-path-traversal.gif)
+![The console refuses a path traversal request under the filesystem pack and shows the path violation](assets/demo/refused-path-traversal.gif)
 
 <sub>mp4: <a href="assets/demo/refused-path-traversal.mp4">refused-path-traversal.mp4</a></sub>
 
 </details>
 
 <details>
-<summary><strong>✎ Amended:</strong> sensitive credentials stripped from tool responses</summary>
+<summary><strong>Amended:</strong> recognized secrets redacted from a tool reply</summary>
 
-![Halberd amending a response containing fake AWS, GitHub, and RSA secrets under the honeypot bundle: blue ink seal with three struck detections, rewritten payload shows [REDACTED]](assets/demo/amended-aws-github-rsa-laden-response.gif)
+![The console amends a demo reply by replacing recognized AWS, GitHub, and RSA secrets with redaction markers](assets/demo/amended-aws-github-rsa-laden-response.gif)
 
 <sub>mp4: <a href="assets/demo/amended-aws-github-rsa-laden-response.mp4">amended-aws-github-rsa-laden-response.mp4</a></sub>
 
 </details>
 
 <details>
-<summary><strong>⛨ Pass granted:</strong> safe database queries reach destination untouched</summary>
+<summary><strong>Allowed:</strong> a safe database query passes unchanged</summary>
 
-![Halberd granting a SELECT id, name FROM students LIMIT 10 under the mcp-server-postgres bundle: brass seal, forwarded to upstream unchanged](assets/demo/granted-safe-select.gif)
+![The console allows a SELECT query under the PostgreSQL pack with no policy violations](assets/demo/granted-safe-select.gif)
 
 <sub>mp4: <a href="assets/demo/granted-safe-select.mp4">granted-safe-select.mp4</a></sub>
 

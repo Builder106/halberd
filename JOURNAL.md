@@ -4,6 +4,14 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-10-24: Verify the rebuild and refresh its media #milestone
+
+The README screenshot and four demo clips now show the new console. The social preview and touch icon have editable SVG sources and PNG exports; a four-size favicon keeps `/favicon.ico` available for clients that request it. On Linux ARM64, lint, TypeScript, 56 unit tests, eight engine browser checks, 17 policy browser flows, and all four recorded demo flows passed. A production-build crawl of the home, console, log, and 404 pages found no console errors, horizontal overflow, small touch targets, axe violations, or hidden focus; a focused 404 pass cleared the last hover flag. The home page's throttled mobile LCP was 2.75 seconds, leaving a performance improvement for later. The hosted site has not yet been updated.
+
+## 2026-10-24: Rebuild the site as one MCP session #decision
+
+The keep tour put wax seals, brass and Roman numerals on top of a template sidebar, cards and a purple glow. The site is now one PostgreSQL session drawn as a sequence diagram, with an assistant lane, Halberd's line and a server lane. Each block sits where Halberd sent it: a refused request stays pressed against the line, and an amended reply crosses it and has its key barred at the crossing point. The playground moved to `/console` on the same lanes, and `/log` shows the session as audit records. `src/data/session.test.ts` runs every scripted request and reply through `public/halberd.wasm`, so the copy can't claim a verdict the engine doesn't give. Its first run caught two rule details escaped one level short. The README demo clips now show the new console.
+
 ## 2026-10-21: Replace the illustrated policy figure #decision
 
 The weapon-mark illustration was a hero graphic, and it needed its own exporter and a separate phone layout. The figure is now a plain proxy figure: the policy check either forwards a call to the MCP server or refuses it, and every decision goes to the audit bus. The SQL examples moved to the text under it.
