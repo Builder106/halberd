@@ -4,6 +4,22 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-10-27: Scope release permission #ci #security
+
+The GoReleaser job now holds the contents write permission for release creation. The workflow default is read-only.
+
+## 2026-10-27: Use golangci-lint v2 with Go 1.26 #ci #decision
+
+The lint job now uses golangci-lint v2.15.0 with action v9. Its v2 config keeps the explicit linter list and existing gosec exclusions. CI remains on Go 1.26.9 to match `go.mod`.
+
+## 2026-10-27: Check Go formatting in CI #ci #decision
+
+The lint job now checks every tracked Go source with `gofmt`. The same Go toolchain supplies the formatter.
+
+## 2026-10-27: Audit the locked web dependencies #ci #decision
+
+The web job now installs from its checked-in lockfile and audits those dependencies.
+
 ## 2026-10-24: Verify the rebuild and refresh its media #milestone
 
 The README screenshot and four demo clips now show the new console. The social preview and touch icon have editable SVG sources and PNG exports; a four-size favicon keeps `/favicon.ico` available for clients that request it. On Linux ARM64, lint, TypeScript, 56 unit tests, eight engine browser checks, 17 policy browser flows, and all four recorded demo flows passed. A production-build crawl of the home, console, log, and 404 pages found no console errors, horizontal overflow, small touch targets, axe violations, or hidden focus; a focused 404 pass cleared the last hover flag. The home page's throttled mobile LCP was 2.75 seconds, leaving a performance improvement for later. The hosted site has not yet been updated.

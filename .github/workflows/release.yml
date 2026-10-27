@@ -5,8 +5,7 @@ on:
     tags: ['v*']
 
 permissions:
-  # Required to create GitHub Releases and upload archive assets.
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref_name }}
@@ -14,6 +13,8 @@ concurrency:
 
 jobs:
   goreleaser:
+    permissions:
+      contents: write
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7

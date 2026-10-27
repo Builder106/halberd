@@ -38,7 +38,7 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          # Go 1.26 toolchain; golangci-lint v1.64.6 is built with and supports Go 1.26.
+          # Go 1.26 toolchain.
           go-version: '1.26.x'
           check-latest: true
           cache: true
@@ -119,9 +119,17 @@ jobs:
           check-latest: true
           cache: true
 
-      - uses: golangci/golangci-lint-action@v6
+      - name: Go format check
+        run: |
+          unformatted=$(git ls-files -z -- '*.go' | xargs -0 gofmt -l)
+          if [ -n "$unformatted" ]; then
+            printf '%s\n' "$unformatted"
+            exit 1
+          fi
+
+      - uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.64.6
+          version: v2.15.0
           install-mode: goinstall
 
   web:
@@ -154,7 +162,11 @@ jobs:
 
       - name: npm install
         working-directory: web
-        run: npm ci || npm install
+        run: npm ci
+
+      - name: npm dependency audit
+        working-directory: web
+        run: npm audit --audit-level=high
 
       - name: next build
         working-directory: web
