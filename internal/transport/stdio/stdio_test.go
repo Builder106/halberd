@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"encoding/json"
 	"io"
 	"strings"
@@ -97,7 +98,10 @@ func (r *rig) close(t *testing.T) {
 	_ = r.childStderr.Close()
 	r.cancel()
 	select {
-	case <-r.wrapDone:
+	case err := <-r.wrapDone:
+		if err != nil && !errors.Is(err, context.Canceled) {
+			t.Errorf("Wrap returned %v after close", err)
+		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("Wrap did not return within 2s of close")
 	}
@@ -390,7 +394,9 @@ func TestWrap_ChildStderrPassesThrough(t *testing.T) {
 	_ = hostOutR.Close()
 	_ = childInR.Close()
 	cancel()
-	<-done
+	if err := <-done; err != nil && !errors.Is(err, context.Canceled) {
+		t.Errorf("Wrap returned %v after cancel", err)
+	}
 	_ = bus.Stop(context.Background())
 }
 

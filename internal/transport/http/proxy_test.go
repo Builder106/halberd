@@ -336,7 +336,7 @@ func TestProxy_SSEForwardsInspectedEventBeforeStreamEnds(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	line := make(chan string, 1)
 	go func() {
 		got, _ := bufio.NewReader(resp.Body).ReadString('\n')
