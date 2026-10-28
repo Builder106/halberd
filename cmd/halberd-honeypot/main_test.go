@@ -23,7 +23,7 @@ type rpcServerInfo struct {
 
 type rpcResult struct {
 	Content    []rpcContent  `json:"content"`
-	IsError    bool           `json:"isError"`
+	IsError    bool          `json:"isError"`
 	ServerInfo rpcServerInfo `json:"serverInfo"`
 	Tools      []rpcTool     `json:"tools"`
 }

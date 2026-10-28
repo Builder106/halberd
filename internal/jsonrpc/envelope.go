@@ -34,7 +34,6 @@ type Error struct {
 	Data    json.RawMessage `json:"data,omitempty"`
 }
 
-
 // JSON-RPC 2.0 reserved error codes plus Halberd's policy-violation code.
 // CodePolicyViolation sits in the -32000..-32099 server-defined range.
 const (

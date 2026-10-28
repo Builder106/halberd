@@ -134,8 +134,8 @@ func evaluateResponseFn(_ js.Value, args []js.Value) any {
 	// Re-shape so the UI gets a uniform { modified, payload, detections }
 	// envelope back as a single JSON string.
 	out := struct {
-		Modified   bool              `json:"modified"`
-		Payload    string            `json:"payload"`
+		Modified   bool               `json:"modified"`
+		Payload    string             `json:"payload"`
 		Detections []policy.Detection `json:"detections"`
 	}{
 		Modified:   r.Modified,
