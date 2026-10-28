@@ -34,17 +34,18 @@ const (
 // flushes on every write (FlushInterval=-1) so SSE streamed responses from
 // the upstream MCP server reach the agent without buffering.
 func NewHandler(target *url.URL, engine *policy.Engine, bus *audit.Bus) http.Handler {
-	proxy := httputil.NewSingleHostReverseProxy(target)
-
-	// FlushInterval -1 causes the proxy to flush on every Write, which is
-	// what SSE needs to stream tool/list_changed and tools/call result chunks
-	// to the agent without buffering.
-	proxy.FlushInterval = -1
-
-	origDirector := proxy.Director
-	proxy.Director = func(r *http.Request) {
-		origDirector(r)
-		r.Host = target.Host
+	proxy := &httputil.ReverseProxy{
+		// SetURL routes to target and sets the outbound Host header to
+		// target.Host. SetXForwarded records the client address and drops any
+		// X-Forwarded-* headers the client supplied.
+		Rewrite: func(r *httputil.ProxyRequest) {
+			r.SetURL(target)
+			r.SetXForwarded()
+		},
+		// FlushInterval -1 causes the proxy to flush on every Write, which is
+		// what SSE needs to stream tool/list_changed and tools/call result chunks
+		// to the agent without buffering.
+		FlushInterval: -1,
 	}
 
 	if engine.HasResponseFilters() {
