@@ -47,6 +47,8 @@ type Defaults struct {
 	UnknownMethod string `yaml:"unknown_method"`
 }
 
+// UnmarshalYAML decodes the defaults block and rejects any key other than
+// unknown_tool and unknown_method.
 func (d *Defaults) UnmarshalYAML(node *yaml.Node) error {
 	var values map[string]string
 	if err := node.Decode(&values); err != nil {
