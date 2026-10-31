@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { lanes } from "../data/session";
+import { lanes } from "@/data/session";
 import { Mark } from "./Mark";
 
 // The sequence diagram's own header, fixed: who sits on each lifeline. It

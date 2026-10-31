@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { TryRefusal } from "./TryRefusal";
-import * as halberdLib from "../lib/halberd";
+import * as halberdLib from "@/lib/halberd";
 
 const engine = (result: object) => ({
   packs: () => "[]",

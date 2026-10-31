@@ -1,4 +1,4 @@
-import { docs, policyExcerpt, refusal, verdictOf, type Exchange as ExchangeData } from "../data/session";
+import { docs, policyExcerpt, refusal, verdictOf, type Exchange as ExchangeData } from "@/data/session";
 import { Crossing, Envelope } from "./Envelope";
 import { TryRefusal } from "./TryRefusal";
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { exchanges, hero, site, verdictOf } from "../data/session";
+import { exchanges, hero, site, verdictOf } from "@/data/session";
 
 const wire = exchanges.map((x) => {
   const req = x.request as { method: string; params?: { name?: string } };

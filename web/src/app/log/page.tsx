@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { audit, exchanges, verdictOf } from "../../data/session";
+import { audit, exchanges, verdictOf } from "@/data/session";
 
 export const metadata: Metadata = {
   title: "Audit log",

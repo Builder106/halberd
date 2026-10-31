@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Console } from "../../components/Console";
+import { Console } from "@/components/Console";
 
 export const metadata: Metadata = {
   title: "Console",

@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Fragment_Mono } from "next/font/google";
-import { Corners } from "../components/Corners";
-import { LaneHeader } from "../components/LaneHeader";
-import { Motion } from "../components/Motion";
-import { site } from "../data/session";
+import { Corners } from "@/components/Corners";
+import { LaneHeader } from "@/components/LaneHeader";
+import { Motion } from "@/components/Motion";
+import { site } from "@/data/session";
 import "./globals.css";
 
 // Archivo carries everything but the wire traffic; its width axis gives the

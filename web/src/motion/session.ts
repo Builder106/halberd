@@ -10,7 +10,7 @@
 // The hero wire is the idle state: method names keep travelling to the line
 // while the hero is on screen. Nothing here runs under reduced motion.
 import { gsap } from "gsap";
-import { ease, prefersReducedMotion, travelTime, type PageFn } from "../engine";
+import { ease, prefersReducedMotion, travelTime, type PageFn } from "@/engine";
 
 // The lane gap, measured: the server lane starts one gap after the rail.
 const gapAfter = (rail: Element) => {

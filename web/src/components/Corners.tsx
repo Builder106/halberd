@@ -5,8 +5,8 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { exchanges, verdictOf } from "../data/session";
-import { usePage } from "../engine/next";
+import { exchanges, verdictOf } from "@/data/session";
+import { usePage } from "@/engine/next";
 
 gsap.registerPlugin(ScrollTrigger);
 

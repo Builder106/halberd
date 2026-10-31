@@ -1,4 +1,4 @@
-import { docs, install, site } from "../data/session";
+import { docs, install, site } from "@/data/session";
 import { Copy } from "./Copy";
 
 function Code({ text, caption }: { text: string; caption: string }) {

@@ -1,4 +1,4 @@
-import { pretty, segments } from "../lib/envelope";
+import { pretty, segments } from "@/lib/envelope";
 
 type Props = {
   value?: unknown;

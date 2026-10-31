@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { matchedText, reindent, segments } from "../lib/envelope";
+import { matchedText, reindent, segments } from "@/lib/envelope";
 import {
   loadHalberd,
   parseDecision,
@@ -10,8 +10,8 @@ import {
   type Decision,
   type PackInfo,
   type ResponseResult,
-} from "../lib/halberd";
-import { presets, type Preset } from "../lib/presets";
+} from "@/lib/halberd";
+import { presets, type Preset } from "@/lib/presets";
 
 type Halberd = Awaited<ReturnType<typeof loadHalberd>>;
 type Engine = { kind: "loading" } | { kind: "ready"; h: Halberd; packs: PackInfo[] } | { kind: "error"; message: string };

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { Console } from "./Console";
-import * as halberdLib from "../lib/halberd";
+import * as halberdLib from "@/lib/halberd";
 
 const packs = [
   { name: "mcp-server-postgres", server: "mcp-server-postgres", responseFilters: true },

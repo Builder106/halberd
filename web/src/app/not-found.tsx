@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Envelope } from "../components/Envelope";
+import { Envelope } from "@/components/Envelope";
 
 export const metadata: Metadata = {
   title: "Method not found",

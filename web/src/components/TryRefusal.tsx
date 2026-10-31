@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { site } from "../data/session";
-import { matchedText } from "../lib/envelope";
-import { loadHalberd, parseDecision } from "../lib/halberd";
+import { site } from "@/data/session";
+import { matchedText } from "@/lib/envelope";
+import { loadHalberd, parseDecision } from "@/lib/halberd";
 
 type Result =
   | { kind: "idle" }
