@@ -48,6 +48,7 @@ jobs:
         with:
           # Go 1.26 toolchain.
           go-version: '1.26.x'
+          check-latest: true
           cache: true
 
       # go mod tidy's output can differ by OS line-ending, so this
@@ -86,6 +87,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.26.x'
+          check-latest: true
           cache: true
 
       - name: run benchmarks
@@ -105,6 +107,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.26.x'
+          check-latest: true
           cache: true
 
       - name: install govulncheck
@@ -121,6 +124,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.26.x'
+          check-latest: true
           cache: true
 
       - name: Go format check
@@ -145,6 +149,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.26.x'
+          check-latest: true
           cache: true
 
       - uses: actions/setup-node@v7
