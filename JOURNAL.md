@@ -4,6 +4,10 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-11-06: End-to-end verification against real stdio and Streamable HTTP MCP servers #milestone #decision
+
+Added real end-to-end integration tests for both stdio (`halberd-stdio`) and Streamable HTTP (`halberd-http`) transports using `halberd-honeypot` as a live upstream server. Updated `halberd-honeypot` with a `--listen` flag to support streamable SSE responses alongside its existing stdio transport, and added a JSON-RPC `shutdown` handler. The integration test suite (`test/mcp_test.go`) exercises the full lifecycle against real binaries for both transports: initialization (`protocolVersion`, `serverInfo`), tool discovery (`tools/list`), an allowed call (`SELECT 1`), a refused call (`DROP TABLE` blocked with `-32000`), a filtered response (redacting fake AWS, GitHub, and RSA credentials under `policies/halberd-honeypot.yaml`, as well as stripping ANSI escapes and zero-width injection characters), and graceful process shutdown with on-disk audit log verification.
+
 ## 2026-10-27: Scope release permission #ci #security
 
 The GoReleaser job now holds the contents write permission for release creation. The workflow default is read-only.
