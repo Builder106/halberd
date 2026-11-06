@@ -121,6 +121,11 @@ func isExitOk(err error) bool {
 		return true
 	}
 	msg := err.Error()
+	if runtime.GOOS == "windows" {
+		return strings.Contains(msg, "exit status 1") ||
+			strings.Contains(msg, "killed") ||
+			strings.Contains(msg, "access is denied")
+	}
 	return strings.Contains(msg, "signal: terminated") ||
 		strings.Contains(msg, "signal: interrupt") ||
 		strings.Contains(msg, "killed")

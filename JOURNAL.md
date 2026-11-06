@@ -4,6 +4,10 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-11-06: Accommodate Windows process termination exit code and bump macOS CI runner #ci #fix
+
+In `test/mcp_test.go`, `TestRealStreamableHTTPMCPServer/shutdown` stopped the background proxy process via `cmd.Process.Kill()`, which on Windows surfaces through `cmd.Wait()` as `exit status 1` rather than POSIX termination signals. Updated `isExitOk` to handle `exit status 1` under Windows, and bumped the macOS runner in CI from retired `macos-14` to `macos-15`.
+
 ## 2026-11-06: Snapshot release inspection and smoke-testing #milestone #decision
 
 Executed a full GoReleaser snapshot release and smoke-tested the packaged release archives. Verified that all four multi-architecture tarballs (`darwin_amd64`, `darwin_arm64`, `linux_amd64`, `linux_arm64`) cleanly pass sha256 checksum checks and bundle all four binaries (`halberd`, `halberd-http`, `halberd-stdio`, `halberd-honeypot`), the example policy (`halberd.example.yaml`), the five bundled rule packs (`policies/*.yaml`), and project documentation. Extracted the host archive on `linux/arm64` and smoke-tested link-time version injection (`halberd version`), policy linting (`halberd lint`) across all bundled packs, stdio interception with `halberd-stdio` wrapping `halberd-honeypot` (exercising protocol handshake, tool discovery, allowed SQL calls, -32000 refused calls, and audit logging), and reverse-proxy inspection with `halberd-http` (verifying allowed calls, refused calls, secret scrubbing of fake AWS/GitHub/RSA credentials, and audit logging). Added `scripts/smoke-test-release.sh` to make archive verification reproducible in pre-release testing.
