@@ -100,6 +100,10 @@ Everything after `+"`--`"+` is treated as the server command and its arguments.`
 }
 
 func run(ctx context.Context, engine *policy.Engine, bus *audit.Bus, argv []string) int {
+	return runWithStreams(ctx, engine, bus, stdiox.HostStreams{In: os.Stdin, Out: os.Stdout, Err: os.Stderr}, argv)
+}
+
+func runWithStreams(ctx context.Context, engine *policy.Engine, bus *audit.Bus, host stdiox.HostStreams, argv []string) int {
 	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
 	// WaitDelay kills the child if it ignores SIGTERM. Tuned conservatively;
 	// most MCP servers shut down in well under a second.
@@ -127,7 +131,7 @@ func run(ctx context.Context, engine *policy.Engine, bus *audit.Bus, argv []stri
 	}
 
 	wrapErr := stdiox.Wrap(ctx, engine, bus,
-		stdiox.HostStreams{In: os.Stdin, Out: os.Stdout, Err: os.Stderr},
+		host,
 		stdiox.ChildStreams{Stdin: childStdin, Stdout: childStdout, Stderr: childStderr},
 	)
 	if wrapErr != nil && !errors.Is(wrapErr, context.Canceled) {

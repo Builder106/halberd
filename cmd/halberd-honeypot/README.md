@@ -4,13 +4,13 @@
 > Its entire purpose is to act as a known-bad upstream so Halberd's policy
 > engine can be observed catching real threats end-to-end.
 
-`halberd-honeypot` is a minimal stdio MCP server that exposes four tools,
+`halberd-honeypot` is a minimal stdio and Streamable HTTP MCP server that exposes four tools,
 each crafted to exercise one or more categories from
 [`docs/threat-model.md`](../../docs/threat-model.md). Pair it with
-`halberd-stdio` in front and you have a one-command playground for
+`halberd-stdio` or `halberd-http` in front and you have a one-command playground for
 demoing, integration-testing, and recording.
 
-## Quick demo
+## Quick demo (stdio)
 
 ```bash
 go build -o bin/ ./cmd/...
@@ -32,6 +32,24 @@ printf '%s\n' \
 
 → Halberd returns a `-32000` policy-violation JSON-RPC error; the
 honeypot never sees the query. The block is in `halberd.jsonl`.
+
+## Streamable HTTP mode
+
+Run `halberd-honeypot` as a Streamable HTTP MCP server:
+
+```bash
+bin/halberd-honeypot --listen 127.0.0.1:8080
+```
+
+Pair with `halberd-http`:
+
+```bash
+bin/halberd-http \
+  --policy policies/halberd-honeypot.yaml \
+  --target http://127.0.0.1:8080 \
+  --listen 127.0.0.1:9090 \
+  --audit  halberd-http.jsonl
+```
 
 ## Threat coverage per tool
 

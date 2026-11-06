@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -231,4 +233,109 @@ func TestNotificationProducesNoResponse(t *testing.T) {
 	if out.Len() != 0 {
 		t.Errorf("server responded to a notification: %q", out.String())
 	}
+}
+
+func TestShutdownMethod(t *testing.T) {
+	resp := dispatch(json.RawMessage(`99`), "shutdown", nil)
+	if resp.Error != nil {
+		t.Fatalf("unexpected error on shutdown: %+v", resp.Error)
+	}
+	if string(resp.Result) != "null" {
+		t.Errorf("expected null result for shutdown, got %s", string(resp.Result))
+	}
+}
+
+func TestHTTPHandler(t *testing.T) {
+	h := newHTTPHandler()
+
+	t.Run("GET /health", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/health", nil)
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		if !strings.Contains(w.Body.String(), "halberd-honeypot ok") {
+			t.Errorf("unexpected body: %s", w.Body.String())
+		}
+	})
+
+	t.Run("GET /sse endpoint event", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodGet, "/sse", nil)
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		if ct := w.Header().Get("Content-Type"); ct != "text/event-stream" {
+			t.Errorf("Content-Type = %q, want text/event-stream", ct)
+		}
+		if !strings.Contains(w.Body.String(), "event: endpoint") {
+			t.Errorf("missing endpoint event: %s", w.Body.String())
+		}
+	})
+
+	t.Run("POST JSON response", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		body := `{"jsonrpc":"2.0","id":1,"method":"ping"}`
+		r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		if ct := w.Header().Get("Content-Type"); ct != "application/json" {
+			t.Errorf("Content-Type = %q, want application/json", ct)
+		}
+		if !strings.Contains(w.Body.String(), `"result":{}`) {
+			t.Errorf("unexpected body: %s", w.Body.String())
+		}
+	})
+
+	t.Run("POST streamable SSE response", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		body := `{"jsonrpc":"2.0","id":2,"method":"initialize","params":{}}`
+		r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+		r.Header.Set("Accept", "text/event-stream")
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		if ct := w.Header().Get("Content-Type"); ct != "text/event-stream" {
+			t.Errorf("Content-Type = %q, want text/event-stream", ct)
+		}
+		if !strings.HasPrefix(w.Body.String(), "data: ") {
+			t.Errorf("expected SSE data line, got: %s", w.Body.String())
+		}
+		if !strings.Contains(w.Body.String(), "halberd-honeypot") {
+			t.Errorf("missing server info: %s", w.Body.String())
+		}
+	})
+
+	t.Run("POST notification returns 204", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		body := `{"jsonrpc":"2.0","method":"notifications/initialized"}`
+		r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusNoContent {
+			t.Errorf("status = %d, want 204", w.Code)
+		}
+	})
+
+	t.Run("POST malformed JSON returns 400", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{invalid`))
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("status = %d, want 400", w.Code)
+		}
+	})
+
+	t.Run("Method not allowed", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		r := httptest.NewRequest(http.MethodPut, "/", nil)
+		h.ServeHTTP(w, r)
+		if w.Code != http.StatusMethodNotAllowed {
+			t.Errorf("status = %d, want 405", w.Code)
+		}
+	})
 }
