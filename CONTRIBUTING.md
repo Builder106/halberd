@@ -113,11 +113,10 @@ multi-arch archives.
 gh run list --limit 1
 $EDITOR JOURNAL.md
 
-# 2. Dry-run goreleaser locally — catches config or build errors before
+# 2. Dry-run goreleaser locally and smoke-test archives — catches config,
+#    build, or packaging errors before they fail in CI
 
-#    they fail in CI
-
-goreleaser release --snapshot --clean --skip=announce,publish
+./scripts/smoke-test-release.sh
 
 # 3. Tag and push. The release workflow takes over from here
 
