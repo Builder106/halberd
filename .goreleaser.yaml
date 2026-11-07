@@ -110,7 +110,7 @@ changelog:
 release:
   github:
     owner: Builder106
-    name: Halberd
+    name: halberd
   draft: false
   # Tag like v0.1.0-rc1 → prerelease. Tag like v0.1.0 → full release.
   prerelease: auto
