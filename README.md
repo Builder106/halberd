@@ -117,7 +117,15 @@ Halberd checks configured T2 rules, denies undeclared tools (T4), and can strip 
 
 ## Install
 
-There is no published binary release yet. To try Halberd, install Go 1.26 or later and build from source:
+Pre-compiled binary releases for Linux and macOS (amd64 and arm64) are available on [GitHub Releases](https://github.com/Builder106/halberd/releases). Each release archive includes `halberd`, `halberd-http`, `halberd-stdio`, `halberd-honeypot`, the example policy, and bundled rule packs.
+
+Verify the downloaded archive against the published checksums:
+
+```bash
+sha256sum -c checksums.txt
+```
+
+To build from source, install Go 1.26 or later:
 
 ```bash
 git clone https://github.com/Builder106/halberd && cd halberd

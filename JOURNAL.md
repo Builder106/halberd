@@ -4,6 +4,10 @@
 > things happen — retrospectives need this raw material to land.
 > Reverse-chronological; one paragraph max per entry.
 
+## 2026-11-07: Cut and verify v0.1.0 first developer release #milestone #release
+
+Cut, tagged, and verified the v0.1.0 developer release of Halberd. The release workflow runs GoReleaser across linux and darwin for amd64 and arm64, generating multi-architecture tarballs containing the four binaries (`halberd`, `halberd-http`, `halberd-stdio`, `halberd-honeypot`), example policy (`halberd.example.yaml`), five bundled rule packs (`policies/*.yaml`), and documentation alongside sha256 checksums. Aligned the release workflow's Go toolchain to `1.26.x` to match `ci.yml` and `go.mod`, updated installation instructions in `README.md`, and marked the milestone complete in `ROADMAP.md`.
+
 ## 2026-11-06: Accommodate Windows process termination exit code and bump macOS CI runner #ci #fix
 
 In `test/mcp_test.go`, `TestRealStreamableHTTPMCPServer/shutdown` stopped the background proxy process via `cmd.Process.Kill()`, which on Windows surfaces through `cmd.Wait()` as `exit status 1` rather than POSIX termination signals. Updated `isExitOk` to handle `exit status 1` under Windows, and bumped the macOS runner in CI from retired `macos-14` to `macos-15`.

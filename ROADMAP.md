@@ -10,7 +10,7 @@ Halberd can be built from source and tried as a local developer tool. Its first 
 - [x] Verify the source build: Go lint, vet, race tests, and 100% policy-package coverage; web lint, type checks, 40 unit tests, eight WebAssembly bridge tests, and 17 browser flow scenarios.
 - [x] Test against a real stdio MCP server and a real Streamable HTTP server. Check initialization, tool discovery, an allowed call, a refused call, a filtered response, and shutdown.
 - [x] Run a GoReleaser snapshot and inspect the archives for all four binaries, the example policy, and the bundled rule packs. Smoke-test an extracted archive on a supported platform.
-- [ ] Cut and verify the first tagged release. Until then, use the [source build instructions](README.md#install).
+- [x] Cut and verify the first tagged release. Until then, use the [source build instructions](README.md#install).
 
 ## v0.2: narrower I/O boundaries
 
