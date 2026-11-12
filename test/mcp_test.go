@@ -460,6 +460,19 @@ func TestRealStreamableHTTPMCPServer(t *testing.T) {
 			t.Errorf("expected null result for shutdown, got: %s", body)
 		}
 
+		// Wait for audit log to record expected decisions before terminating the proxy process
+		deadline := time.Now().Add(5 * time.Second)
+		var auditLog string
+		for time.Now().Before(deadline) {
+			if auditBytes, err := os.ReadFile(auditPath); err == nil {
+				auditLog = string(auditBytes)
+				if strings.Contains(auditLog, `"blocked":true`) && strings.Contains(auditLog, `"direction":"response"`) {
+					break
+				}
+			}
+			time.Sleep(25 * time.Millisecond)
+		}
+
 		// Stop proxy and upstream processes cleanly
 		if err := stopProcess(proxyCmd); err != nil {
 			t.Fatalf("stop proxy: %v", err)
@@ -476,11 +489,9 @@ func TestRealStreamableHTTPMCPServer(t *testing.T) {
 		}
 
 		// Verify audit log has recorded decisions
-		auditBytes, err := os.ReadFile(auditPath)
-		if err != nil {
-			t.Fatalf("read audit file: %v", err)
+		if auditBytes, err := os.ReadFile(auditPath); err == nil {
+			auditLog = string(auditBytes)
 		}
-		auditLog := string(auditBytes)
 		if !strings.Contains(auditLog, `"blocked":true`) {
 			t.Errorf("audit log missing blocked decision: %s", auditLog)
 		}
