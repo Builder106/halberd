@@ -1,7 +1,7 @@
 # Contributing to Halberd
 
-Thanks for the interest. Halberd is small and opinionated; this document
-exists so we don't waste each other's time on PRs that won't land.
+Thanks for your interest in Halberd. This guide covers setup, project
+boundaries, and the checks to run before opening a PR.
 
 ## Dev setup
 
@@ -61,10 +61,10 @@ for the threat-coverage table.
 
   server go in `policies/<server-name>.yaml`, not in `internal/policy/`.
 
-- **The engine is IO-free.** `internal/policy`does not import`os`, `net`,
+- **The engine is IO-free.** `internal/policy` does not import `os`, `net`,
 
   or `io`. Anything that talks to the outside world goes in `cmd/` or
-  `internal/transport/`or`internal/audit/`.
+  `internal/transport/` or `internal/audit/`.
 
 ## Commit and PR conventions
 
@@ -131,7 +131,7 @@ gh run watch
 ```
 
 Goreleaser injects the tag value as `main.version` at link time, so
-`halberd version`and the`halberd-honeypot` startup banner both report
+`halberd version` and the `halberd-honeypot` startup banner both report
 the actual release version. Snapshot builds report `<next>-next-<sha>`.
 
 ## Maintaining visual assets

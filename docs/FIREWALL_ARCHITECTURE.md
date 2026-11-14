@@ -1,6 +1,6 @@
 # Halberd Agent Firewall Architecture
 
-This document describes the high-performance JSON-RPC firewall architecture, WebAssembly bridge design, and threat mitigation engine implemented in Halberd.
+This document describes Halberd's JSON-RPC policy checks and WebAssembly bridge, including the threats those checks do and do not cover.
 
 ## Threat Matrix & Mitigation Coverage
 
@@ -46,9 +46,9 @@ sequenceDiagram
 
 ## Verdict Taxonomies
 
-1. **⚔ Refused**: Pressed in red wax when a request contains denied SQL commands, forbidden paths, or unauthorized tool names. The request never hits the upstream server.
-2. **⛨ Pass Granted**: Pressed in brass when the request matches all pass rules and contains no violation patterns. Sent to upstream untouched.
-3. **✎ Amended**: Pressed in blue ink when a response contains sensitive credentials (AWS keys, GitHub tokens, private RSA blocks). Secrets are struck out and replaced with `[REDACTED]`.
+1. **⚔ Refused**: A request violates a configured rule, such as a denied SQL pattern or an unauthorized tool name. It does not reach the upstream server.
+2. **⛨ Pass Granted**: A request passes the configured checks and is forwarded upstream unchanged.
+3. **✎ Amended**: A configured response filter matches a supported credential pattern. The match is replaced with `[REDACTED]`; unrecognized secrets are not guaranteed to be caught.
 
 ## WebAssembly Bridge (`cmd/halberd-wasm`)
 
