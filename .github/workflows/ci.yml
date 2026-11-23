@@ -174,7 +174,7 @@ jobs:
 
       - name: npm dependency audit
         working-directory: web
-        run: npm audit --audit-level=high
+        run: node scripts/audit.mjs
 
       - name: next build
         working-directory: web
